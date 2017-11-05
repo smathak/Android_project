@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.jieun.project2.ThingsToDo">
+    tools:context="com.example.jieun.project2.edit_delete">
     <RelativeLayout
         android:layout_width="368dp"
         android:layout_height="495dp"
@@ -54,14 +54,25 @@
             android:id="@+id/editButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/contentText"
+            android:layout_alignEnd="@+id/textView2"
             android:layout_alignStart="@+id/contentText"
             android:layout_below="@+id/contentText"
             android:layout_marginTop="10dp"
-            android:onClick="addThings"
-            android:text="Add"
+            android:onClick="editThing"
+            android:text="Edit"
             tools:layout_editor_absoluteX="59dp"
             tools:layout_editor_absoluteY="447dp" />
+
+        <Button
+            android:id="@+id/deleteButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="deleteThing"
+            android:text="delete"
+            android:layout_alignBottom="@+id/editButton"
+            android:layout_alignEnd="@+id/contentText"
+            android:layout_toEndOf="@+id/editButton"
+            android:layout_alignTop="@+id/editButton" />
 
     </RelativeLayout>
 </android.support.constraint.ConstraintLayout>

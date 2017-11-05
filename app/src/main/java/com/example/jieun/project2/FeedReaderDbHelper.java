@@ -20,13 +20,12 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
 
     public void onCreate(SQLiteDatabase db)
     {
-        db.execSQL(FeedReaderContract.SQL_DELETE_TABLE);
+        //db.execSQL(FeedReaderContract.SQL_DELETE_TABLE);
         db.execSQL(FeedReaderContract.SQL_CREATE_TABLE);
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
     {
-        //db.execSQL(FeedReaderContract.SQL_DELETE_TABLE);
         onCreate(db);
     }
 
