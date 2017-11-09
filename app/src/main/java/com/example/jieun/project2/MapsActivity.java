@@ -1,9 +1,12 @@
 package com.example.jieun.project2;
 
 import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -20,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TabHost;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -36,6 +40,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -54,22 +59,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String newTitle;
     String newContent;
 
+    ArrayList<PendingIntent> mPendingIntentList;
+    BroadcastReceiver broadcastReceiver;
+    IntentFilter filter;
+
     public class GPSListener implements LocationListener {
         public void onLocationChanged(Location location) {
             Double latitude = location.getLatitude();
             Double longitude = location.getLongitude();
-            String msg = "Latitude: " + latitude + "\\nLongitude: " + longitude;
+
+            String msg = "Latitude: " + latitude + "\nLongitude: " + longitude;
             Log.i("notice", msg);
         }
 
-        public void onProviderDisabled(String provider) {
-        }
+        public void onProviderDisabled(String provider){}
 
-        public void onProviderEnabled(String provider) {
-        }
+        public void onProviderEnabled(String provider){}
 
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
+        public void onStatusChanged(String provider, int status, Bundle extras){}
     }
 
     @Override
@@ -90,6 +97,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         gpsListener = new GPSListener();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        mPendingIntentList = new ArrayList();
+        filter = new IntentFilter();
+        filter.addAction("my.broadcast.proximity");
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i("notice", "I am near marker");
+                String title = intent.getStringExtra("title");
+                String content = intent.getStringExtra("content");
+                String msg = "Title: "+title+"\n Things todo: "+content;
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+            }
+        };
+        registerReceiver(broadcastReceiver, filter);
     }
 
     public void onStart(){
@@ -101,7 +123,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Log.i("notice", "test handler");
                 try {
                     //Location lastLocation = locationManager.getLastKnownLocation(Context.GPS_PROVIDERS);
                     lastLocation = getLastKnownLocation(locationManager);
@@ -109,7 +130,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         Double latitude = lastLocation.getLatitude();
                         Double longitude = lastLocation.getLongitude();
                         String msg = "Latitude: " + latitude + "\nLongitude: " + longitude;
-                        Log.i("notice", "test up: " + msg);
+                        //Log.i("notice", "test lastlocation: " + msg);
+                        //Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                     } else if (lastLocation == null) {
                         Log.i("notice", "lastlocation is null");
                     }
@@ -164,6 +186,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         float zoomLevel = 16.0f; //This goes up to 21
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
+        int id = 0;
         // mDB query
         mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude"}, null, null, null, null, "_id");
         int i = 0;
@@ -179,7 +202,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     lng = mCursor.getDouble(i);
                     mMap.addMarker(new MarkerOptions().title(title).snippet(content)
                             .position(new LatLng(lat, lng)));
+                    try{
+                        Intent proximityIntent = new Intent("my.broadcast.proximity");
+                        proximityIntent.putExtra("id", id);
+                        proximityIntent.putExtra("latitude", lat);
+                        proximityIntent.putExtra("longitude", lng);
+                        proximityIntent.putExtra("title", title);
+                        proximityIntent.putExtra("content", content);
+                        PendingIntent pendingintent = PendingIntent.getBroadcast(this, id++, proximityIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        locationManager.addProximityAlert(lat, lng, 50, -1, pendingintent);
+                        mPendingIntentList.add(pendingintent);
 
+                    }catch(SecurityException e){
+                        e.printStackTrace();
+                    }
                     i = 0;
                 } while (mCursor.moveToNext());
             }
@@ -201,6 +237,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 edit_delete_func(marker, marker.getTitle(), marker.getSnippet(), marker.getPosition());
             }
         });
+
+        try{
+            mMap.setMyLocationEnabled(true);
+        }catch(SecurityException e){
+            e.printStackTrace();
+        }
     }
 
     public void edit_delete_func(Marker marker, String title, String content, LatLng position){
@@ -308,5 +350,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
         onMarkerClick(renewed);
+    }
+
+    public void startLocationService(){
+
+
     }
 }
