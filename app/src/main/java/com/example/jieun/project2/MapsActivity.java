@@ -2,12 +2,17 @@ package com.example.jieun.project2;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,6 +22,11 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -26,6 +36,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.List;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
@@ -33,8 +45,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Cursor mCursor;
     Marker renewed;
 
+    LocationManager locationManager;
+    Location lastLocation;
+    GPSListener gpsListener;
+    boolean isGPSEnabled;
+    Handler handler;
+
     String newTitle;
     String newContent;
+
+    public class GPSListener implements LocationListener {
+        public void onLocationChanged(Location location) {
+            Double latitude = location.getLatitude();
+            Double longitude = location.getLongitude();
+            String msg = "Latitude: " + latitude + "\\nLongitude: " + longitude;
+            Log.i("notice", msg);
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+
+        public void onProviderEnabled(String provider) {
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +85,66 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         FeedReaderDbHelper mDbHelper = new FeedReaderDbHelper(this);
         mDB = mDbHelper.getWritableDatabase();
         mDbHelper.onCreate(mDB);
+
+        handler = new Handler();
+        gpsListener = new GPSListener();
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
+
+    public void onStart(){
+        super.onStart();
+        if (isGPSEnabled == true) {
+            Log.i("notice", "gps ok");
+        }
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.i("notice", "test handler");
+                try {
+                    //Location lastLocation = locationManager.getLastKnownLocation(Context.GPS_PROVIDERS);
+                    lastLocation = getLastKnownLocation(locationManager);
+                    if (lastLocation != null) {
+                        Double latitude = lastLocation.getLatitude();
+                        Double longitude = lastLocation.getLongitude();
+                        String msg = "Latitude: " + latitude + "\nLongitude: " + longitude;
+                        Log.i("notice", "test up: " + msg);
+                    } else if (lastLocation == null) {
+                        Log.i("notice", "lastlocation is null");
+                    }
+
+                    long minTime = 100; // 0.1초
+                    float minDistance = 0;
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, gpsListener);
+
+                } catch (SecurityException e) {
+                    e.printStackTrace();
+                }
+                handler.postDelayed(this, 1000);
+            }
+        }, 1000);
+    }
+
+    private Location getLastKnownLocation(LocationManager locationManager) {
+        List<String> providers = locationManager.getProviders(true);
+        Location lastLocation = null;
+        for (String provider : providers) {
+            try{
+                Location location = locationManager.getLastKnownLocation(provider);
+                if (location == null) {
+                    continue;
+                }
+                if (lastLocation == null || location.getAccuracy() < lastLocation.getAccuracy()) {
+                    lastLocation = location;
+                }
+            }catch(SecurityException e){
+                e.printStackTrace();
+            }
+        }
+        return lastLocation;
+    }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
