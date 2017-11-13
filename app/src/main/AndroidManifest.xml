@@ -40,6 +40,10 @@
         </activity>
         <activity android:name=".ThingsToDo" />
         <activity android:name=".edit_delete" />
+        <activity android:name=".NoticeBoard" />
+        <activity android:name=".Popup"
+            android:theme="@style/AppTheme.CustomTheme">
+        </activity>
     </application>
 
 </manifest>

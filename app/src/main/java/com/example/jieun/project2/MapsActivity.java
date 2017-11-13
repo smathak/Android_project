@@ -20,6 +20,9 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -63,6 +66,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     BroadcastReceiver broadcastReceiver;
     IntentFilter filter;
 
+    Intent popupIntent;
+
     public class GPSListener implements LocationListener {
         public void onLocationChanged(Location location) {
             Double latitude = location.getLatitude();
@@ -98,17 +103,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
+        popupIntent = new Intent(getApplicationContext(), Popup.class);
+
         mPendingIntentList = new ArrayList();
         filter = new IntentFilter();
         filter.addAction("my.broadcast.proximity");
+
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.i("notice", "I am near marker");
-                String title = intent.getStringExtra("title");
-                String content = intent.getStringExtra("content");
-                String msg = "Title: "+title+"\n Things todo: "+content;
+                final String title = intent.getStringExtra("title");
+                final String content = intent.getStringExtra("content");
+                final String msg = "Title: "+title+"\n Things todo: "+content;
+                Log.i("notice", msg);
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                popupIntent.putExtra("title", title);
+                popupIntent.putExtra("content", content);
+                startActivity(popupIntent);
             }
         };
         registerReceiver(broadcastReceiver, filter);
@@ -176,6 +187,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
+    public void unregisterProximity(){
+        if(mPendingIntentList != null){
+            for(int i=0; i<mPendingIntentList.size(); i++){
+                PendingIntent current = (PendingIntent)mPendingIntentList.get(i);
+                locationManager.removeProximityAlert(current);
+                mPendingIntentList.remove(i);
+            }
+        }
+    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -186,7 +207,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         float zoomLevel = 16.0f; //This goes up to 21
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
-        int id = 0;
+
+        unregisterProximity();
+        int id = 0; // for pending intent
         // mDB query
         mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude"}, null, null, null, null, "_id");
         int i = 0;
@@ -210,7 +233,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         proximityIntent.putExtra("title", title);
                         proximityIntent.putExtra("content", content);
                         PendingIntent pendingintent = PendingIntent.getBroadcast(this, id++, proximityIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-                        locationManager.addProximityAlert(lat, lng, 50, -1, pendingintent);
+                        locationManager.addProximityAlert(lat, lng, 30, -1, pendingintent);
                         mPendingIntentList.add(pendingintent);
 
                     }catch(SecurityException e){
@@ -351,9 +374,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         onMarkerClick(renewed);
     }
+    public boolean onCreateOptionsMenu(Menu menu){
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
 
-    public void startLocationService(){
-
-
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch(item.getItemId()){
+            case R.id.item:
+                Intent intent = new Intent(this, NoticeBoard.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }
