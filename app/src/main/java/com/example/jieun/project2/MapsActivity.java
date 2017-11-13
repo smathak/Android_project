@@ -16,6 +16,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -67,6 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     IntentFilter filter;
 
     Intent popupIntent;
+    Vibrator v;
 
     public class GPSListener implements LocationListener {
         public void onLocationChanged(Location location) {
@@ -104,6 +106,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
         popupIntent = new Intent(getApplicationContext(), Popup.class);
+        v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
 
         mPendingIntentList = new ArrayList();
         filter = new IntentFilter();
@@ -120,6 +123,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 popupIntent.putExtra("title", title);
                 popupIntent.putExtra("content", content);
                 startActivity(popupIntent);
+                v.vibrate(1000);
             }
         };
         registerReceiver(broadcastReceiver, filter);
