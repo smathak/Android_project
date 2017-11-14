@@ -3,36 +3,33 @@ package com.example.jieun.project2;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Point;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TabHost;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -67,23 +64,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String newTitle;
     String newContent;
 
+    // BroadCast Receiver
     ArrayList<PendingIntent> mPendingIntentList;
     BroadcastReceiver broadcastReceiver;
     IntentFilter filter;
+    int id; // for pending intent
 
+    // Popup
     Intent popupIntent;
     Vibrator v;
 
+    // Geocoding
     Geocoder geocoder;
     List<Address> addresses;
+
+    // Service
+    MyService myService;
+    boolean mBound = false;
 
     public class GPSListener implements LocationListener {
         public void onLocationChanged(Location location) {
             Double latitude = location.getLatitude();
             Double longitude = location.getLongitude();
 
-            String msg = "Latitude: " + latitude + "\nLongitude: " + longitude;
-            Log.i("notice", msg);
+            try {
+                addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                String featureName = addresses.get(0).getFeatureName();
+                Toast.makeText(getApplicationContext(), "Current Location is "+featureName, Toast.LENGTH_SHORT);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         public void onProviderDisabled(String provider){}
@@ -131,43 +141,73 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 popupIntent.putExtra("title", title);
                 popupIntent.putExtra("content", content);
                 popupIntent.putExtra("featureName", featureName);
-                startActivity(popupIntent);
-                v.vibrate(1000);
+//                startActivity(popupIntent);
+                myService.showpopup(popupIntent);
+                v.vibrate(700);
             }
         };
         registerReceiver(broadcastReceiver, filter);
 
         geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        Intent serviceIntent = new Intent(getApplicationContext(), MyService.class);
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder iBinder) {
+            MyService.LocalBinder binder = (MyService.LocalBinder) iBinder;
+            myService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBound = false;
+        }
+    };
+
+    public void onStop(){
+        super.onStop();
+        if(mBound){
+            unbindService(serviceConnection);
+            mBound = false;
+        }
+
+//        if(mPendingIntentList != null){
+//            for(int i=0; i<mPendingIntentList.size(); i++){
+//                PendingIntent current = (PendingIntent)mPendingIntentList.get(i);
+//                locationManager.removeProximityAlert(current);
+//                mPendingIntentList.remove(i);
+//            }
+//        }
+    }
     public void onStart(){
         super.onStart();
         if (isGPSEnabled == true) {
-            Log.i("notice", "gps ok");
+            Log.i("notice", "gps turned on");
         }
 
+        try {
+            //Location lastLocation = locationManager.getLastKnownLocation(Context.GPS_PROVIDERS);
+            lastLocation = getLastKnownLocation(locationManager);
+            if (lastLocation != null) {
+                Double latitude = lastLocation.getLatitude();
+                Double longitude = lastLocation.getLongitude();
+                String msg = "Latitude: " + latitude + "\nLongitude: " + longitude;
+                //Log.i("notice", "test lastlocation: " + msg);
+                //Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+            } else if (lastLocation == null) {
+                Log.i("notice", "lastlocation is null");
+            }
 
-                try {
-                    //Location lastLocation = locationManager.getLastKnownLocation(Context.GPS_PROVIDERS);
-                    lastLocation = getLastKnownLocation(locationManager);
-                    if (lastLocation != null) {
-                        Double latitude = lastLocation.getLatitude();
-                        Double longitude = lastLocation.getLongitude();
-                        String msg = "Latitude: " + latitude + "\nLongitude: " + longitude;
-                        //Log.i("notice", "test lastlocation: " + msg);
-                        //Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-                    } else if (lastLocation == null) {
-                        Log.i("notice", "lastlocation is null");
-                    }
+            long minTime = 100; // 0.1초
+            float minDistance = 0;
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, gpsListener);
 
-                    long minTime = 100; // 0.1초
-                    float minDistance = 0;
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, gpsListener);
-
-                } catch (SecurityException e) {
-                    e.printStackTrace();
-                }
-
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
     }
 
     private Location getLastKnownLocation(LocationManager locationManager) {
@@ -203,6 +243,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if(mPendingIntentList != null){
             for(int i=0; i<mPendingIntentList.size(); i++){
                 PendingIntent current = (PendingIntent)mPendingIntentList.get(i);
+                Log.i("notice", "In pending list: "+current.getCreatorUid());
                 locationManager.removeProximityAlert(current);
                 mPendingIntentList.remove(i);
             }
@@ -218,9 +259,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         float zoomLevel = 16.0f; //This goes up to 21
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
-
         unregisterProximity();  // renew
-        int id = 0; // for pending intent
+
+        id = 0;
         // mDB query
         mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName"}, null, null, null, null, "_id");
         int i = 0;
@@ -235,8 +276,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     lat = mCursor.getDouble(i++);
                     lng = mCursor.getDouble(i);
                     featureName = mCursor.getString(i++);
-                    mMap.addMarker(new MarkerOptions().title(title).snippet(content)
-                            .position(new LatLng(lat, lng)));
+                    mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(new LatLng(lat, lng)));
                     try{
                         Intent proximityIntent = new Intent("my.broadcast.proximity");
                         proximityIntent.putExtra("id", id);
@@ -278,6 +318,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }catch(SecurityException e){
             e.printStackTrace();
         }
+
     }
 
     public void edit_delete_func(Marker marker, String title, String content, LatLng position){
@@ -332,6 +373,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Double lat = intent.getDoubleExtra("latitude", 0);
                 Double lng = intent.getDoubleExtra("longitude", 0);
                 LatLng position = new LatLng(lat, lng);
+                String address;
+                String featureName =" ";
 
                 ContentValues values = new ContentValues();
                 values.put("title", title); values.put("content", content);
@@ -339,8 +382,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 try {
                     addresses = geocoder.getFromLocation(lat, lng, 1);
-                    String address = addresses.get(0).getAddressLine(0);
-                    String featureName = addresses.get(0).getFeatureName();
+                    address = addresses.get(0).getAddressLine(0);
+                    featureName = addresses.get(0).getFeatureName();
                     Log.i("notice", address+", "+featureName);
                     values.put("featureName", featureName);
                 } catch (IOException e) {
@@ -351,6 +394,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if(mode.equals("insert")){
                     mDB.insert("things_table", null, values);
                     mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(position));
+
+                    try{
+                        Intent proximityIntent = new Intent("my.broadcast.proximity");
+                        proximityIntent.putExtra("id", id);
+                        proximityIntent.putExtra("latitude", lat);
+                        proximityIntent.putExtra("longitude", lng);
+                        proximityIntent.putExtra("title", title);
+                        proximityIntent.putExtra("content", content);
+                        proximityIntent.putExtra("featureName", featureName);
+                        PendingIntent pendingintent = PendingIntent.getBroadcast(this, id++, proximityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                        locationManager.addProximityAlert(lat, lng, 30, -3, pendingintent);
+                        mPendingIntentList.add(pendingintent);
+                    }catch(SecurityException e){
+                        e.printStackTrace();
+                    }
+
                 }
 
                 // Update marker
