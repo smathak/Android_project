@@ -31,16 +31,15 @@ public class NoticeBoard extends Activity {
         mDBHelper.onCreate(mDB);
 
         ArrayList<HashMap<String, String>> mList = new ArrayList<HashMap<String, String>>();
-        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude"},
+        mCursor = mDB.query("things_table", new String[]{"title", "content", "featureName"},
                 null, null, null, null, "_id");
         if(mCursor != null){
             if(mCursor.moveToFirst()){
                 do{
                     HashMap<String, String> item = new HashMap<String, String>();
-                    item.put(mCursor.getColumnName(0), mCursor.getString(0));
-                    item.put(mCursor.getColumnName(1), mCursor.getString(1));
-                    item.put(mCursor.getColumnName(2), String.valueOf(mCursor.getDouble(2)));
-                    item.put(mCursor.getColumnName(3), String.valueOf(mCursor.getDouble(3)));
+                    item.put(mCursor.getColumnName(0), mCursor.getString(0));   // title
+                    item.put(mCursor.getColumnName(1), mCursor.getString(1));   // content
+                    item.put(mCursor.getColumnName(2), mCursor.getString(2));   // featureName
                     mList.add(item);
                 }while(mCursor.moveToNext());
             }

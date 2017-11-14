@@ -27,12 +27,15 @@ public class Popup extends AppCompatActivity {
         Intent intent = getIntent();
         String title = intent.getStringExtra("title");
         String content = intent.getStringExtra("content");
+        String feature = intent.getStringExtra("featureName");
 
         TextView titleText = (TextView)findViewById(R.id.titleText);
         TextView contentText = (TextView)findViewById(R.id.contentText);
+        TextView featureName = (TextView)findViewById(R.id.featureName);
 
-        titleText.setText(title);
-        contentText.setText(content);
+        titleText.setText("Title: "+title);
+        contentText.setText("Things to do: "+content);
+        featureName.setText("At: "+feature);
     }
 
     public void pressClose(View view){

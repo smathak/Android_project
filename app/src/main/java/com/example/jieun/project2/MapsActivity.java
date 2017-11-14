@@ -11,6 +11,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -44,8 +46,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
@@ -69,6 +73,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     Intent popupIntent;
     Vibrator v;
+
+    Geocoder geocoder;
+    List<Address> addresses;
 
     public class GPSListener implements LocationListener {
         public void onLocationChanged(Location location) {
@@ -117,16 +124,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onReceive(Context context, Intent intent) {
                 final String title = intent.getStringExtra("title");
                 final String content = intent.getStringExtra("content");
+                final String featureName = intent.getStringExtra("featureName");
                 final String msg = "Title: "+title+"\n Things todo: "+content;
                 Log.i("notice", msg);
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                 popupIntent.putExtra("title", title);
                 popupIntent.putExtra("content", content);
+                popupIntent.putExtra("featureName", featureName);
                 startActivity(popupIntent);
                 v.vibrate(1000);
             }
         };
         registerReceiver(broadcastReceiver, filter);
+
+        geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
     }
 
     public void onStart(){
@@ -135,9 +146,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.i("notice", "gps ok");
         }
 
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
+
                 try {
                     //Location lastLocation = locationManager.getLastKnownLocation(Context.GPS_PROVIDERS);
                     lastLocation = getLastKnownLocation(locationManager);
@@ -158,9 +167,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 } catch (SecurityException e) {
                     e.printStackTrace();
                 }
-                handler.postDelayed(this, 1000);
-            }
-        }, 1000);
+
     }
 
     private Location getLastKnownLocation(LocationManager locationManager) {
@@ -212,21 +219,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
 
-        unregisterProximity();
+        unregisterProximity();  // renew
         int id = 0; // for pending intent
         // mDB query
-        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude"}, null, null, null, null, "_id");
+        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName"}, null, null, null, null, "_id");
         int i = 0;
         if(mCursor!=null) {
             if (mCursor.moveToPosition(0)) {
                 do {
                     Double lat, lng;
-                    String title, content;
+                    String title, content, featureName;
                     // title, content, lat, lng
                     title = mCursor.getString(i++);
                     content = mCursor.getString(i++);
                     lat = mCursor.getDouble(i++);
                     lng = mCursor.getDouble(i);
+                    featureName = mCursor.getString(i++);
                     mMap.addMarker(new MarkerOptions().title(title).snippet(content)
                             .position(new LatLng(lat, lng)));
                     try{
@@ -236,10 +244,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         proximityIntent.putExtra("longitude", lng);
                         proximityIntent.putExtra("title", title);
                         proximityIntent.putExtra("content", content);
-                        PendingIntent pendingintent = PendingIntent.getBroadcast(this, id++, proximityIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        proximityIntent.putExtra("featureName", featureName);
+                        PendingIntent pendingintent = PendingIntent.getBroadcast(this, id++, proximityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
                         locationManager.addProximityAlert(lat, lng, 30, -1, pendingintent);
                         mPendingIntentList.add(pendingintent);
-
                     }catch(SecurityException e){
                         e.printStackTrace();
                     }
@@ -328,6 +336,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 ContentValues values = new ContentValues();
                 values.put("title", title); values.put("content", content);
                 values.put("latitude", lat); values.put("longitude", lng);
+
+                try {
+                    addresses = geocoder.getFromLocation(lat, lng, 1);
+                    String address = addresses.get(0).getAddressLine(0);
+                    String featureName = addresses.get(0).getFeatureName();
+                    Log.i("notice", address+", "+featureName);
+                    values.put("featureName", featureName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
                 // Save it to SQLite
                 if(mode.equals("insert")){
