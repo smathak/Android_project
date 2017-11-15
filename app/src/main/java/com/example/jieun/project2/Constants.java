@@ -12,10 +12,6 @@ import java.util.List;
 
 
 public final class Constants {
-    public static final HashMap<String, THINGS> POPUP_MESSAGE = new HashMap<String, THINGS>();
+    public static final HashMap<String, LatLng> POPUP_MESSAGE = new HashMap<String, LatLng>();
 
-    public void addPopupMessage(String title, String content, Double lat, Double lng, String featureName){
-        THINGS thing = new THINGS(title, content, lat, lng);
-        POPUP_MESSAGE.put(featureName, thing);
-    }
 }

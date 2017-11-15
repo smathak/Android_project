@@ -1,5 +1,7 @@
 package com.example.jieun.project2;
 
+import android.*;
+import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -9,18 +11,23 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.PermissionChecker;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -28,9 +35,13 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingEvent;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
@@ -43,21 +54,43 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener, ResultCallback<Status> {
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.i("notice", "onLocationChanged: "+location.getLatitude()+", "+location.getLongitude());
+        Double lat = location.getLatitude();
+        Double lng = location.getLongitude();
+        try{
+            addresses = geocoder.getFromLocation(lat, lng, 1);
+            String featureName = addresses.get(0).getFeatureName();
+
+//            Toast.makeText(this, "Latitude: "+location.getLatitude()+ "\nLongitude: "+location.getLongitude()+
+//                    "\nCurrent location: "+featureName, Toast.LENGTH_LONG).show();
+        }catch(IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     private GoogleMap mMap;
     private SQLiteDatabase mDB;
     Cursor mCursor;
     Marker renewed;
 
-    LocationManager locationManager;
-    Location lastLocation;
-    GPSListener gpsListener;
+    private GoogleApiClient googleApiClient;
+    private LocationManager locationManager;
+    private Location lastLocation;
+    private LocationRequest locationRequest;
     boolean isGPSEnabled;
     Handler handler;
 
@@ -65,10 +98,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String newContent;
 
     // BroadCast Receiver
-    ArrayList<PendingIntent> mPendingIntentList;
     BroadcastReceiver broadcastReceiver;
     IntentFilter filter;
-    int id; // for pending intent
 
     // Popup
     Intent popupIntent;
@@ -82,31 +113,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     MyService myService;
     boolean mBound = false;
 
-    public class GPSListener implements LocationListener {
-        public void onLocationChanged(Location location) {
-            Double latitude = location.getLatitude();
-            Double longitude = location.getLongitude();
-
-            try {
-                addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                String featureName = addresses.get(0).getFeatureName();
-                Toast.makeText(getApplicationContext(), "Current Location is "+featureName, Toast.LENGTH_SHORT);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void onProviderDisabled(String provider){}
-
-        public void onProviderEnabled(String provider){}
-
-        public void onStatusChanged(String provider, int status, Bundle extras){}
-    }
+    //Geofence
+    ArrayList<Geofence> geofenceList;
+    PendingIntent pendingIntent;
+    GeofencingRequest geofencingRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        String[] permissions = new String[]{android.Manifest.permission.INTERNET,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION};
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            for (String permission : permissions) {
+                int result = PermissionChecker.checkSelfPermission(this, permission);
+                if (result == PermissionChecker.PERMISSION_GRANTED);
+                else ActivityCompat.requestPermissions(this, permissions, 1);
+            }
+       }
+
+        if (Build.VERSION.SDK_INT>=23 &&
+                ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.INTERNET)!= PackageManager.PERMISSION_GRANTED&&
+                ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION)!= PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED)
+            return;
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -118,32 +150,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDbHelper.onCreate(mDB);
 
         handler = new Handler();
-        gpsListener = new GPSListener();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        if(googleApiClient==null){
+            googleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API).build();
+        }
+        googleApiClient.connect();
+
+        locationRequest =  new LocationRequest();
+        locationRequest.setInterval(20000);
+        locationRequest.setFastestInterval(10000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+//        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
 
         popupIntent = new Intent(getApplicationContext(), Popup.class);
         v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
 
-        mPendingIntentList = new ArrayList();
         filter = new IntentFilter();
         filter.addAction("my.broadcast.proximity");
 
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                final String title = intent.getStringExtra("title");
-                final String content = intent.getStringExtra("content");
-                final String featureName = intent.getStringExtra("featureName");
-                final String msg = "Title: "+title+"\n Things todo: "+content;
-                Log.i("notice", msg);
-                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-                popupIntent.putExtra("title", title);
-                popupIntent.putExtra("content", content);
-                popupIntent.putExtra("featureName", featureName);
-//                startActivity(popupIntent);
-                myService.showpopup(popupIntent);
-                v.vibrate(700);
+                Log.i("notice", "broadcast");
             }
         };
         registerReceiver(broadcastReceiver, filter);
@@ -173,60 +203,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             unbindService(serviceConnection);
             mBound = false;
         }
-
-//        if(mPendingIntentList != null){
-//            for(int i=0; i<mPendingIntentList.size(); i++){
-//                PendingIntent current = (PendingIntent)mPendingIntentList.get(i);
-//                locationManager.removeProximityAlert(current);
-//                mPendingIntentList.remove(i);
-//            }
-//        }
+        Log.i("notice", "onStop");
     }
+
+    public void onDestroy(){
+        super.onDestroy();
+        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+        if(googleApiClient != null){
+            googleApiClient.disconnect();
+        }
+        Log.i("notice", "onDestroy");
+    }
+
     public void onStart(){
         super.onStart();
-        if (isGPSEnabled == true) {
-            Log.i("notice", "gps turned on");
-        }
+        if (isGPSEnabled == true)  Log.i("notice", "gps turned on");
 
-        try {
-            //Location lastLocation = locationManager.getLastKnownLocation(Context.GPS_PROVIDERS);
-            lastLocation = getLastKnownLocation(locationManager);
-            if (lastLocation != null) {
-                Double latitude = lastLocation.getLatitude();
-                Double longitude = lastLocation.getLongitude();
-                String msg = "Latitude: " + latitude + "\nLongitude: " + longitude;
-                //Log.i("notice", "test lastlocation: " + msg);
-                //Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-            } else if (lastLocation == null) {
-                Log.i("notice", "lastlocation is null");
+        try{
+            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+            if(lastLocation == null){
+                Log.i("notice", "last location is null");   // 가장 처음 시작할 때는 null 이다.
+            }else{
+                Log.i("notice", "last location latitude: "+String.valueOf(lastLocation.getLatitude()));
+                Toast.makeText(this, "latitude test: "+String.valueOf(lastLocation.getLatitude()), Toast.LENGTH_LONG);
+                LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
             }
-
-            long minTime = 100; // 0.1초
-            float minDistance = 0;
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, gpsListener);
-
-        } catch (SecurityException e) {
+        }catch(SecurityException e){
             e.printStackTrace();
         }
     }
 
-    private Location getLastKnownLocation(LocationManager locationManager) {
-        List<String> providers = locationManager.getProviders(true);
-        Location lastLocation = null;
-        for (String provider : providers) {
-            try{
-                Location location = locationManager.getLastKnownLocation(provider);
-                if (location == null) {
-                    continue;
-                }
-                if (lastLocation == null || location.getAccuracy() < lastLocation.getAccuracy()) {
-                    lastLocation = location;
-                }
-            }catch(SecurityException e){
-                e.printStackTrace();
-            }
+    public void removeGeofences(){
+        try{
+            Intent intent = new Intent(this, GeofenceTransitionIntentService.class);
+            PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            LocationServices.GeofencingApi.removeGeofences(googleApiClient, pendingIntent).setResultCallback(this);
+        }catch(SecurityException e){
+            e.printStackTrace();
         }
-        return lastLocation;
     }
 
     /**
@@ -238,20 +252,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-
-    public void unregisterProximity(){
-        if(mPendingIntentList != null){
-            for(int i=0; i<mPendingIntentList.size(); i++){
-                PendingIntent current = (PendingIntent)mPendingIntentList.get(i);
-                Log.i("notice", "In pending list: "+current.getCreatorUid());
-                locationManager.removeProximityAlert(current);
-                mPendingIntentList.remove(i);
-            }
-        }
-    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        geofenceList = new ArrayList<Geofence>();
 
         // Add a marker in Sydney and move the camera
         LatLng latLng = new LatLng(37.222434, 127.186257);
@@ -259,9 +263,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         float zoomLevel = 16.0f; //This goes up to 21
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
-        unregisterProximity();  // renew
-
-        id = 0;
         // mDB query
         mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName"}, null, null, null, null, "_id");
         int i = 0;
@@ -277,24 +278,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     lng = mCursor.getDouble(i);
                     featureName = mCursor.getString(i++);
                     mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(new LatLng(lat, lng)));
-                    try{
-                        Intent proximityIntent = new Intent("my.broadcast.proximity");
-                        proximityIntent.putExtra("id", id);
-                        proximityIntent.putExtra("latitude", lat);
-                        proximityIntent.putExtra("longitude", lng);
-                        proximityIntent.putExtra("title", title);
-                        proximityIntent.putExtra("content", content);
-                        proximityIntent.putExtra("featureName", featureName);
-                        PendingIntent pendingintent = PendingIntent.getBroadcast(this, id++, proximityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-                        locationManager.addProximityAlert(lat, lng, 30, -1, pendingintent);
-                        mPendingIntentList.add(pendingintent);
-                    }catch(SecurityException e){
-                        e.printStackTrace();
-                    }
-                    i = 0;
+                    Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
+                    i = 0;  
                 } while (mCursor.moveToNext());
             }
         }
+
+        for(Map.Entry<String, LatLng> entry : Constants.POPUP_MESSAGE.entrySet())
+            geofenceList.add(new Geofence.Builder()
+                    .setRequestId(entry.getKey())
+                    .setCircularRegion(entry.getValue().latitude, entry.getValue().longitude, 30)
+                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .build());
+
+        Intent gintent = new Intent(this, GeofenceTransitionIntentService.class);
+//        gintent.setAction("my.broadcast.proximity");
+        pendingIntent = PendingIntent.getBroadcast(this, 0, gintent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+        builder.addGeofences(geofenceList);
+        try{
+            geofencingRequest = builder.build();
+        }catch(IllegalArgumentException e){
+            e.printStackTrace();
+        }
+        Log.i("notice", "onMapReady called");
+//        try{
+//            LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
+//        }catch(SecurityException e){
+//            e.printStackTrace();
+//        }
 
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener(){
             @Override
@@ -363,6 +378,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         startActivityForResult(intent, 0);
     }
 
+
     public void onActivityResult(int requestCode, int resultCode, Intent intent){
         super.onActivityResult(requestCode, resultCode, intent);
         if(requestCode == 0){
@@ -393,23 +409,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 // Save it to SQLite
                 if(mode.equals("insert")){
                     mDB.insert("things_table", null, values);
-                    mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(position));
-
-                    try{
-                        Intent proximityIntent = new Intent("my.broadcast.proximity");
-                        proximityIntent.putExtra("id", id);
-                        proximityIntent.putExtra("latitude", lat);
-                        proximityIntent.putExtra("longitude", lng);
-                        proximityIntent.putExtra("title", title);
-                        proximityIntent.putExtra("content", content);
-                        proximityIntent.putExtra("featureName", featureName);
-                        PendingIntent pendingintent = PendingIntent.getBroadcast(this, id++, proximityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-                        locationManager.addProximityAlert(lat, lng, 30, -3, pendingintent);
-                        mPendingIntentList.add(pendingintent);
-                    }catch(SecurityException e){
-                        e.printStackTrace();
-                    }
-
+                    renewed = mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(position));
+                    redraw_map(renewed, "insert");
                 }
 
                 // Update marker
@@ -417,58 +418,151 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     String _id = intent.getStringExtra("_id");
                     mDB.update("things_table", values, "_id=" + _id, null);
                     newContent = content;
-                    redraw_map(renewed);
+                    redraw_map(renewed, "update");
                 }
 
                 // Delete marker
                 if(mode.equals("delete")){
                     String _id = intent.getStringExtra("_id");
                     mDB.delete("things_table", "_id="+_id, null);
-                    redraw_map(renewed);
+                    redraw_map(renewed, "delete");
                 }
             }
         }
     }
 
-    public void redraw_map(Marker renewed){
+    public void redraw_map(Marker renewed, String mode){
         mMap.clear(); // clear map first
+        Constants.POPUP_MESSAGE.clear(); // insert, update, delete 를 눌러도 모두 clear 해야 한다.
+        geofenceList.clear();
 
         // redraw
-        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude"}, null, null, null, null, "_id");
+        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName"}, null, null, null, null, "_id");
         int i = 0;
-        if(mCursor!=null) {
+        if(mCursor!=null)
             if (mCursor.moveToPosition(0)) {
                 do {
                     Double lat, lng;
-                    String title, content;
+                    String title, content, featureName;
                     // title, content, lat, lng
                     title = mCursor.getString(i++);
                     content = mCursor.getString(i++);
                     lat = mCursor.getDouble(i++);
-                    lng = mCursor.getDouble(i);
+                    lng = mCursor.getDouble(i++);
+                    featureName = mCursor.getString(i);
+
                     mMap.addMarker(new MarkerOptions().title(title).snippet(content)
                             .position(new LatLng(lat, lng)));
-
+                    // renew Constants
+                    Constants.POPUP_MESSAGE.put("Title: " + title + "\nThings todo: " + content+"\nAt: "+featureName, new LatLng(lat, lng));
                     i = 0;
                 } while (mCursor.moveToNext());
             }
+        // Delete를 한 경우
+        if(mode.equals("delete")){
+            // 1. clear existed geofence;
+            removeGeofences(); // 1. clear
+
+            // 2. renew all the other geofences
+            for(Map.Entry<String, LatLng> entry : Constants.POPUP_MESSAGE.entrySet())   // 2. renew
+            geofenceList.add(new Geofence.Builder()
+                    .setRequestId(entry.getKey())
+                        .setCircularRegion(entry.getValue().latitude, entry.getValue().longitude, 30)
+                        .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+                        .build());
+
+            Intent gintent = new Intent(this, GeofenceTransitionIntentService.class);
+            pendingIntent = PendingIntent.getService(this, 0, gintent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+            builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+            builder.addGeofences(geofenceList);
+            try{
+                geofencingRequest = builder.build();
+            }catch(IllegalArgumentException e){
+                e.printStackTrace();
+            }
         }
-        onMarkerClick(renewed);
+
+        // Insert, Udpate, Request를 한 경우
+        if(mode.equals("insert") | mode.equals("update") | mode.equals("request")){
+            removeGeofences(); // 1. clear
+
+            for(Map.Entry<String, LatLng> entry : Constants.POPUP_MESSAGE.entrySet())   // 2. renew
+                geofenceList.add(new Geofence.Builder()
+                        .setRequestId(entry.getKey())
+                        .setCircularRegion(entry.getValue().latitude, entry.getValue().longitude, 30)
+                        .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+                        .build());
+
+            Intent gintent = new Intent(this, GeofenceTransitionIntentService.class);
+            pendingIntent = PendingIntent.getService(this, 0, gintent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+            builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+            builder.addGeofences(geofenceList);
+            try{
+                geofencingRequest = builder.build();
+            }catch(IllegalArgumentException e){
+                e.printStackTrace();
+            }
+
+            try{ // 3. restart(insert, update, request 에서만)
+                LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
+            }catch(SecurityException e){
+                e.printStackTrace();
+            }
+        }
     }
+
     public boolean onCreateOptionsMenu(Menu menu){
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.main_menu, menu);
         return true;
     }
 
+    public void onRestart(){
+        super.onRestart();
+        try{
+            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+            if(lastLocation == null){
+                Log.i("notice", "last location is null");   // 가장 처음 시작할 때는 null 이다.
+            }else{
+                Log.i("notice", "last location latitude: "+String.valueOf(lastLocation.getLatitude()));
+            }
+        }catch(SecurityException e){
+            e.printStackTrace();
+        }
+    }
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
             case R.id.item:
                 Intent intent = new Intent(this, NoticeBoard.class);
                 startActivity(intent);
                 return true;
+            case R.id.request:
+                try{
+                    onRestart();
+                    redraw_map(renewed, "request");
+                    LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+
+//                    try{
+//                        LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
+//                    }catch(SecurityException e){
+//                        e.printStackTrace();
+//                    }
+                }catch(SecurityException e){
+                    e.printStackTrace();
+                }
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onResult(@NonNull Status status) {
+
     }
 }

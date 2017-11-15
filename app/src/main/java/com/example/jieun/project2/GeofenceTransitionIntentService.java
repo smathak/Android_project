@@ -3,8 +3,10 @@ package com.example.jieun.project2;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
+import android.os.Vibrator;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
@@ -28,8 +30,6 @@ public class GeofenceTransitionIntentService extends IntentService {
     // TODO: Rename parameters
     private static final String EXTRA_PARAM1 = "com.example.jieun.project2.extra.PARAM1";
     private static final String EXTRA_PARAM2 = "com.example.jieun.project2.extra.PARAM2";
-
-
 
     /**
      * Starts this service to perform action Foo with the given parameters. If
@@ -65,49 +65,33 @@ public class GeofenceTransitionIntentService extends IntentService {
         super("GeofenceTransitionIntentService");
     }
 
+      String text;
+
     @Override
     protected void onHandleIntent(Intent intent) {
-//        if (intent != null) {
-//            final String action = intent.getAction();
-//            if (ACTION_FOO.equals(action)) {
-//                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-//                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-//                handleActionFoo(param1, param2);
-//            } else if (ACTION_BAZ.equals(action)) {
-//                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-//                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-//                handleActionBaz(param1, param2);
-//            }
-//        }
-        GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
-        List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
-        ArrayList triggeringGeofencingIdsList = new ArrayList();
+        synchronized (this){
+            GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+            List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+            ArrayList triggeringGeofencingIdsList = new ArrayList();
 
-        for(Geofence geofence : triggeringGeofences  ){
-            triggeringGeofencingIdsList.add(geofence.getRequestId());
+            for(Geofence geofence : triggeringGeofences  ){
+                text = geofence.getRequestId();
+                triggeringGeofencingIdsList.add(geofence.getRequestId());
+            }
+            String IDs = TextUtils.join(", ", triggeringGeofencingIdsList);
+
+            int transitiontype = geofencingEvent.getGeofenceTransition();
+            if(transitiontype == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                Log.i("notice", text);
+                Intent popupintent = new Intent(this, Popup.class);
+                popupintent.putExtra("text", text);
+                popupintent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(popupintent);
+                Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+                v.vibrate(800);
+            }
         }
-        String IDs = TextUtils.join(", ", triggeringGeofencingIdsList);
 
-        int transitiontype = geofencingEvent.getGeofenceTransition();
-        if(transitiontype == Geofence.GEOFENCE_TRANSITION_ENTER)
-            Log.i("notice", "geofence enter test");
     }
 
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionFoo(String param1, String param2) {
-        // TODO: Handle action Foo
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
 }

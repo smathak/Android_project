@@ -5,11 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.jieun.project2.edit_delete">
+
+
     <RelativeLayout
-        android:layout_width="368dp"
-        android:layout_height="495dp"
-        tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="8dp">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <TextView
             android:id="@+id/textView"
@@ -17,9 +17,18 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="21dp"
+            android:layout_marginStart="36dp"
+            android:layout_marginTop="45dp"
             android:text="Title" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignStart="@+id/textView"
+            android:layout_below="@+id/textView"
+            android:layout_marginTop="131dp"
+            android:text="Things To do" />
 
         <EditText
             android:id="@+id/titleText"
@@ -27,52 +36,37 @@
             android:layout_height="wrap_content"
             android:layout_alignStart="@+id/textView"
             android:layout_below="@+id/textView"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="24dp"
             android:ems="10"
             android:inputType="textPersonName" />
 
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignStart="@+id/titleText"
-            android:layout_below="@+id/titleText"
-            android:layout_marginTop="40dp"
-            android:text="Things to do at this place" />
-
         <EditText
             android:id="@+id/contentText"
-            android:layout_width="300dp"
-            android:layout_height="250dp"
+            android:layout_width="wrap_content"
+            android:layout_height="100dp"
             android:layout_alignStart="@+id/textView2"
             android:layout_below="@+id/textView2"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="30dp"
             android:ems="10"
             android:inputType="textMultiLine" />
 
         <Button
-            android:id="@+id/editButton"
+            android:id="@+id/button2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/textView2"
+            android:layout_alignParentBottom="true"
             android:layout_alignStart="@+id/contentText"
-            android:layout_below="@+id/contentText"
-            android:layout_marginTop="10dp"
+            android:layout_marginBottom="82dp"
             android:onClick="editThing"
-            android:text="Edit"
-            tools:layout_editor_absoluteX="59dp"
-            tools:layout_editor_absoluteY="447dp" />
+            android:text="Edit" />
 
         <Button
-            android:id="@+id/deleteButton"
+            android:id="@+id/button3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/button2"
+            android:layout_toEndOf="@+id/contentText"
             android:onClick="deleteThing"
-            android:text="delete"
-            android:layout_alignBottom="@+id/editButton"
-            android:layout_alignEnd="@+id/contentText"
-            android:layout_toEndOf="@+id/editButton"
-            android:layout_alignTop="@+id/editButton" />
-
+            android:text="Delete" />
     </RelativeLayout>
 </android.support.constraint.ConstraintLayout>

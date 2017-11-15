@@ -5,4 +5,7 @@
     <item
         android:id="@+id/item"
         android:title="Notice Board" />
+    <item
+        android:id="@+id/request"
+        android:title="Start" />
 </menu>

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -24,17 +23,11 @@ public class Popup extends AppCompatActivity {
         getWindow().setLayout((int)(width*0.8), (int)(height*0.6));
 
         Intent intent = getIntent();
-        String title = intent.getStringExtra("title");
-        String content = intent.getStringExtra("content");
-        String feature = intent.getStringExtra("featureName");
+        String text = intent.getStringExtra("text");
 
-        TextView titleText = (TextView)findViewById(R.id.titleText);
-        TextView contentText = (TextView)findViewById(R.id.contentText);
-        TextView featureName = (TextView)findViewById(R.id.featureName);
+        TextView titleText = (TextView)findViewById(R.id.textView);
 
-        titleText.setText("Title: "+title);
-        contentText.setText("Things to do: "+content);
-        featureName.setText("At: "+feature);
+        titleText.setText(text);
     }
 
     public void pressClose(View view){
