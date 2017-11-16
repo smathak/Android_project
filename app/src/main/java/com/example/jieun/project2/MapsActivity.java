@@ -22,6 +22,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -34,6 +35,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -70,15 +72,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.i("notice", "onLocationChanged: "+location.getLatitude()+", "+location.getLongitude());
+//        Log.i("notice", "onLocationChanged: "+location.getLatitude()+", "+location.getLongitude());
         Double lat = location.getLatitude();
         Double lng = location.getLongitude();
         try{
             addresses = geocoder.getFromLocation(lat, lng, 1);
             String featureName = addresses.get(0).getFeatureName();
 
-//            Toast.makeText(this, "Latitude: "+location.getLatitude()+ "\nLongitude: "+location.getLongitude()+
-//                    "\nCurrent location: "+featureName, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Latitude: "+location.getLatitude()+ "\nLongitude: "+location.getLongitude()+
+                    "\nCurrent location: "+featureName, Toast.LENGTH_LONG).show();
         }catch(IOException e) {
             e.printStackTrace();
         }
@@ -90,6 +92,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Cursor mCursor;
     Marker renewed;
 
+    // GPS
     private GoogleApiClient googleApiClient;
     private LocationManager locationManager;
     private Location lastLocation;
@@ -97,7 +100,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     boolean isGPSEnabled;
     Handler handler;
 
-    String newTitle;
     String newContent;
 
     // BroadCast Receiver
@@ -176,11 +178,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.i("notice", "broadcast");
                 String text = intent.getStringExtra("text");
-                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
 
-                sendNotification(text);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                myService.sendNotification(text);
             }
         };
         registerReceiver(broadcastReceiver, filter);
@@ -190,24 +191,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
-    public void sendNotification(String text){
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        Intent notificationIntent = new Intent(this, Popup.class);
-        notificationIntent.putExtra("text", text);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setContentTitle("MjRemider: You have things to do here")
-                .setContentText(text)
-                .setSmallIcon(R.mipmap.icon)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-                .setWhen(System.currentTimeMillis())
-                .setPriority(NotificationCompat.PRIORITY_MAX);
-
-        notificationManager.notify(1234, builder.build());
-    }
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override

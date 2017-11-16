@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
+import android.os.PowerManager;
 import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
@@ -92,7 +93,7 @@ public class GeofenceTransitionIntentService extends IntentService {
                 popupintent.putExtra("text", text);
                 popupintent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(popupintent);
-                Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                 v.vibrate(800);
 
                 // Broadcast
@@ -100,7 +101,30 @@ public class GeofenceTransitionIntentService extends IntentService {
                 broadIntent.setAction("my.broadcast.proximity");
                 broadIntent.putExtra("text", text);
                 sendBroadcast(broadIntent);
+
+//                sendNotification(text);
             }
         }
     }
+
+//    public void sendNotification(String text){
+//
+//        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//
+//        Intent notificationIntent = new Intent(this, Popup.class);
+//        notificationIntent.putExtra("text", text);
+//        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+//                .setContentTitle("MjRemider: You have things to do here")
+//                .setContentText(text)
+//                .setSmallIcon(R.mipmap.icon)
+//                .setContentIntent(pendingIntent)
+//                .setAutoCancel(true)
+//                .setWhen(System.currentTimeMillis())
+//                .setPriority(NotificationCompat.PRIORITY_MAX);
+//
+//        notificationManager.notify(1234, builder.build());
+//    }
 }

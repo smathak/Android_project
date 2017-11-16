@@ -44,7 +44,7 @@
             android:layout_height="100dp"
             android:layout_alignStart="@+id/textView2"
             android:layout_below="@+id/textView2"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="14dp"
             android:ems="10"
             android:inputType="textMultiLine" />
 
@@ -54,9 +54,16 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="57dp"
+            android:layout_marginBottom="11dp"
             android:onClick="addThings"
             android:text="Add" />
+
+        <TimePicker
+            android:id="@+id/timePicker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/textView" />
 
     </RelativeLayout>
 </android.support.constraint.ConstraintLayout>
