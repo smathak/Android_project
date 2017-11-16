@@ -2,13 +2,16 @@ package com.example.jieun.project2;
 
 import android.app.Activity;
 import android.app.ExpandableListActivity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ListView;
@@ -49,5 +52,16 @@ public class NoticeBoard extends Activity {
                 new String[]{"title", "content"}, new int[]{android.R.id.text1, android.R.id.text2});
         ListView listView = (ListView)findViewById(R.id.listView);
         listView.setAdapter(simpleAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                EditAndDelete(position);
+            }
+        });
+    }
+
+    public void EditAndDelete(int position){
+
     }
 }

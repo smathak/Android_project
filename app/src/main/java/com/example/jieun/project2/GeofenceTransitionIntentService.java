@@ -1,9 +1,12 @@
 package com.example.jieun.project2;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
 import android.os.Vibrator;
+import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -83,15 +86,21 @@ public class GeofenceTransitionIntentService extends IntentService {
             int transitiontype = geofencingEvent.getGeofenceTransition();
             if(transitiontype == Geofence.GEOFENCE_TRANSITION_ENTER) {
                 Log.i("notice", text);
+
+                // Invoke popup
                 Intent popupintent = new Intent(this, Popup.class);
                 popupintent.putExtra("text", text);
                 popupintent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(popupintent);
                 Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
                 v.vibrate(800);
+
+                // Broadcast
+                Intent broadIntent = new Intent();
+                broadIntent.setAction("my.broadcast.proximity");
+                broadIntent.putExtra("text", text);
+                sendBroadcast(broadIntent);
             }
         }
-
     }
-
 }

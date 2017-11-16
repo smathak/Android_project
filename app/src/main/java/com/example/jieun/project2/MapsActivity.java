@@ -3,6 +3,7 @@ package com.example.jieun.project2;
 import android.*;
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -26,6 +27,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.util.Log;
@@ -53,6 +55,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.wearable.CapabilityApi;
 
 import org.w3c.dom.Text;
 
@@ -174,6 +177,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.i("notice", "broadcast");
+                String text = intent.getStringExtra("text");
+                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+
+                sendNotification(text);
             }
         };
         registerReceiver(broadcastReceiver, filter);
@@ -181,6 +188,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
         Intent serviceIntent = new Intent(getApplicationContext(), MyService.class);
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    public void sendNotification(String text){
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        Intent notificationIntent = new Intent(this, Popup.class);
+        notificationIntent.putExtra("text", text);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+                .setContentTitle("MjRemider: You have things to do here")
+                .setContentText(text)
+                .setSmallIcon(R.mipmap.icon)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setWhen(System.currentTimeMillis())
+                .setPriority(NotificationCompat.PRIORITY_MAX);
+
+        notificationManager.notify(1234, builder.build());
     }
 
     private ServiceConnection serviceConnection = new ServiceConnection() {

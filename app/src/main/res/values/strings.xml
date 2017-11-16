@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">MjReminder2</string>
+    <string name="app_name">MjReminder</string>
     <string name="title_activity_maps">MjReminder</string>
-    <string name="title_activity_maps2">Map</string>
 </resources>
