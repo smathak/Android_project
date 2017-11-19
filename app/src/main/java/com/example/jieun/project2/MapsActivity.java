@@ -40,6 +40,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.gcm.GcmPubSub;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
@@ -118,7 +119,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     GeofencingRequest geofencingRequest;
     GeofencingClient geofencingClient;
 
-    String nickname;
+    String myname;
     String friend;
     AppServer appServer;
 
@@ -210,6 +211,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         pendingIntent = PendingIntent.getBroadcast(this, 0, gintent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         appServer = new AppServer();
+
+        // Starts with myname
+        Intent mainIntent = getIntent();
+        myname = mainIntent.getStringExtra("myname");
+        Constants.MY_NAME =myname;
+
+
+        // 내 이름을 구독
+        // 나(Client App)dl topic/myname 을 App server 로 부터 받으면 GcmListener 가 호출된다.
+
     }
 
 
@@ -372,7 +383,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 String address;
                 String featureName =" ";
                 friend = intent.getStringExtra("friend");
-                Log.i("notice", "nickname: "+nickname+", friend: "+friend);
+                // 친구 등록 (친구 구독 - subscribe)
+                if(friend!=null) {  // friend의 이름을 App server 에서 client app 으로 보낸다
+                    appServer.registerFriend(friend);
+                }
 
                 int year = intent.getIntExtra("year", 0);
                 int month = intent.getIntExtra("month", 0);
@@ -485,10 +499,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             case R.id.gcmFriend:
                 Intent friendIntent = new Intent(this, FriendActivity.class);
                 startActivityForResult(friendIntent, 0);
-                // 친구 등록 (친구 구독 - subscribe)
-                if(friend!=null) {
-                    appServer.registerFriend(friend);
-                }
 
                 return true;
             default:
@@ -531,11 +541,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     lat = mCursor.getDouble(i++);
                     lng = mCursor.getDouble(i++);
                     featureName = mCursor.getString(i++);
-                    year = mCursor.getInt(i++);
-                    month = mCursor.getInt(i++);
-                    day = mCursor.getInt(i++);
-                    hour = mCursor.getInt(i++);
-                    minute = mCursor.getInt(i);
                     Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
                     i = 0;
                 } while (mCursor.moveToNext());

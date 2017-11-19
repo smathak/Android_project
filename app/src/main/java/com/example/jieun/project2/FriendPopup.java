@@ -43,6 +43,7 @@ public class FriendPopup extends AppCompatActivity {
     }
 
     public void pressAccept(View view){
+        // 친구를 myname_table에 저장
         // 신청한 친구를 구독한다.(친구가 보내는 메세지를 받음)
         RegistrationService registrationService = new RegistrationService();
         try {

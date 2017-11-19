@@ -38,12 +38,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class RegistrationService extends IntentService {
     // TODO: Rename actions, choose action names that describe tasks that this
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.example.jieun.project2.action.FOO";
-    private static final String ACTION_BAZ = "com.example.jieun.project2.action.BAZ";
-
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.example.jieun.project2.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.example.jieun.project2.extra.PARAM2";
 
     public RegistrationService() {
         super("RegistrationService");
@@ -55,30 +49,6 @@ public class RegistrationService extends IntentService {
      *
      * @see IntentService
      */
-    // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, RegistrationService.class);
-        intent.setAction(ACTION_FOO);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
-
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, RegistrationService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
-
     private final Context mContext = this;
     private static final String[] TOPICS = {"friendrequest"};
     JSONArray registration_ids = new JSONArray();
@@ -98,14 +68,17 @@ public class RegistrationService extends IntentService {
                     // Registration token(For client App) - 앱을 켜자마자 Client App이 downstram message를 받기 위한 App server의 token을 받음
                     token = instanceID.getToken(getString(R.string.gcm_defaultSenderId),
                             GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
-                    Log.i("notice", "check token: "+token);
                     registration_ids.put(Arrays.asList(token));
 
 //                    AppServer appServer = new AppServer();
 //                    appServer.send(token, registration_ids);
 
                     pubSub = GcmPubSub.getInstance(mContext);
-                    pubSub.subscribe(token, "/topics/jiuen", null);
+                    pubSub.subscribe(token, "/topics/"+Constants.MY_NAME, null);    // 나에게 오는 친구 신청을 받는다.
+
+                    // myname_table에서 친구 리스트를 가져와 subscribe 한다.
+                    // 친구 에게서 오는 gcm message를 받는다.
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -120,23 +93,5 @@ public class RegistrationService extends IntentService {
 
     public void subscribeTopics(String friend) throws IOException {
         pubSub.subscribe(token, "/topics/" + friend, null);
-    }
-
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionFoo(String param1, String param2) {
-        // TODO: Handle action Foo
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
     }
 }

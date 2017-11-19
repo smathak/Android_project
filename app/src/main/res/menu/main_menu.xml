@@ -9,9 +9,6 @@
         android:id="@+id/request"
         android:title="Start" />
     <item
-        android:id="@+id/createId"
-        android:title="Create My ID" />
-    <item
         android:id="@+id/gcmFriend"
         android:title="Friend Register" />
 </menu>

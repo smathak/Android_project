@@ -178,15 +178,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
                 "myname=?", new String[]{myname}, null, null, null);
         Log.i("notice", "test: "+mCursor.toString());
         if(mCursor != null) {   // 있으면 MapActivity 에 이름을 넘겨준다.
-            Log.i("notice", "MainActivity: " + "mCursor is not null");
             if (mCursor.moveToFirst()) {
                 myname = mCursor.getString(0);  // 이름만 구한다.
+                Constants.MY_NAME = myname;
+                // GCM
+                Intent regisIntent = new Intent(this, RegistrationService.class);
+                startService(regisIntent);
+
                 // Show google map
                 Intent ToTheMapIntent = new Intent(this, MapsActivity.class);
                 ToTheMapIntent.putExtra("myname", myname);
                 startActivity(ToTheMapIntent);
             } else {
-                Log.i("notice", "MainActivity: " + "no such name");
                 nameExist = (TextView) findViewById(R.id.nameExist);
                 nameExist.setText("No such name");
             }

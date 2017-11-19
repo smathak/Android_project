@@ -24,7 +24,8 @@ public class MyGcmListenerService extends GcmListenerService {
     public void onMessageReceived(String from, Bundle data) {
         String message = data.getString("message");
 
-        if (from.startsWith( "/topics/jieun")) {
+        // /topics/myname으로 한다. 그러면 Client App은 App server 에서 온 message 중 내 이름을 topic으로 보낸 메시지만 받는다.
+        if (from.startsWith( "/topics/"+Constants.MY_NAME)) {
             // message received from some topic.
             Log.i("notice", "onMessageReceived TOPIC: "+message);
         } else {

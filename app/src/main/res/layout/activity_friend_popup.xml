@@ -32,16 +32,17 @@
             android:onClick="pressAccept"
             android:text="Yes" />
 
+        <Button
+            android:id="@+id/reject"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:layout_alignStart="@+id/accept"
+            android:layout_below="@+id/accept"
+            android:onClick="pressReject"
+            android:text="No"
+            tools:layout_editor_absoluteX="162dp"
+            tools:layout_editor_absoluteY="279dp" />
+
     </RelativeLayout>
 
-    <Button
-        android:id="@+id/reject"
-        android:layout_width="60dp"
-        android:layout_height="40dp"
-        android:layout_alignStart="@+id/textView"
-        android:layout_below="@+id/textView"
-        android:onClick="pressReject"
-        android:text="No"
-        tools:layout_editor_absoluteX="162dp"
-        tools:layout_editor_absoluteY="279dp" />
 </android.support.constraint.ConstraintLayout>

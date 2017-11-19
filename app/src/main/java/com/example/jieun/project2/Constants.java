@@ -14,4 +14,5 @@ import java.util.List;
 public final class Constants {
     public static final HashMap<String, LatLng> POPUP_MESSAGE = new HashMap<String, LatLng>();
     public static ArrayList<String> friendsList = new ArrayList<String>();
+    public static String MY_NAME = null;
 }

@@ -26,8 +26,8 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class AppServer {
 
-    String server_key = ""; // Server key(For app Server in Firebase)
-    String sender_id = "";
+    String server_key = "AAAAgkUXc-0:APA91bHpxOFapwTWJATAGNYLlQ0HcXW3k4RrsfekWb-VMx-LYrjBSJM2UMWTegoSfPbollQY0svzv7MioTp-JpA5niHD2YhpM19PvwU14_fu4EUyU1yNw6WuLa5PiWdhikKXNvzCND-n"; // Server key(For app Server in Firebase)
+    String sender_id = "559504913389";
     JSONObject jsonObject = new JSONObject();
     JSONObject down = new JSONObject();
     // GCM Server HTTP 방식
@@ -65,9 +65,10 @@ public class AppServer {
                         jsonObject.accumulate("notification_key_name", "appUser-jieun");
                         jsonObject.accumulate("registrations_ids", registration_ids);
 
-                        down.accumulate("to", "/topics/"+"jieun");
+                        // 내가 원하는 친구의 이름을 넣어 보낸다.
+                        down.accumulate("to", "/topics/"+"jieun");  // 테스트용(추후 수정)
                         JSONObject message = new JSONObject();
-                        message.put("message", "jieun want te be your freind");
+                        message.put("message", "jieun");
                         down.put("data", message);
 
                     } catch (JSONException e) {
@@ -125,7 +126,7 @@ public class AppServer {
                     OutputStream output = http.getOutputStream();
                     try {
                         // 친구가 jieun 이라 가정. 나중에 friend로 바꾼다.
-                        down.accumulate("to", "/topics/"+"jiuen");
+                        down.accumulate("to", "/topics/"+friend);
                         JSONObject message = new JSONObject();
                         message.put("message", friend);
                         down.put("data", message);
