@@ -12,6 +12,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="com.google.android.c2dm.permission.SEND" />
 
     <application
         android:allowBackup="true"
@@ -33,19 +35,28 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps">
-        </activity>
-
+            android:label="@string/title_activity_maps" />
         <activity android:name=".ThingsToDo" />
         <activity android:name=".edit_delete" />
         <activity android:name=".NoticeBoard" />
         <activity
             android:name=".Popup"
+            android:taskAffinity="com.example.jieun.project2.Popup"
             android:theme="@style/AppTheme.CustomTheme" />
-            <!--android:theme = "@android:style/Theme.Dialog"/>-->
+        <!-- Invoke activity Popup when screen turned off -->
+        <!-- android:theme = "@android:style/Theme.Dialog"/> -->
 
+
+        <!-- Geofence -->
         <service
             android:name=".GeofenceTransitionIntentService"
             android:exported="false" />
@@ -54,15 +65,53 @@
             android:enabled="true"
             android:exported="true" />
 
+        <!-- GCM -->
 
-        <activity android:name=".MainActivity">
+
+        <!-- which handles messages sent from GCM to your application. -->
+        <receiver
+            android:name="com.google.android.gms.gcm.GcmReceiver"
+            android:exported="true"
+            android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <!-- implicit intent -->
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+
+                <category android:name="com.example.gcm" />
             </intent-filter>
-        </activity>
+        </receiver>
 
+        <service
+            android:name=".MyGcmListenerService"
+            android:exported="false">
+            <intent-filter>
+
+                <!-- implicit intent -->
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+            </intent-filter>
+        </service>
+
+        <!-- To use this API, include InstanceIDListenerService in the manifest -->
+        <service
+            android:name=".MyInstanceIDListenerService"
+            android:exported="false">
+            <intent-filter>
+
+                <!-- implicit intent -->
+                <action android:name="com.google.android.gms.iid.InstanceID" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".RegistrationService"
+            android:exported="false" />
+
+        <!-- clear until this line -->
+
+        <activity android:name=".DateTime" />
+        <activity android:name=".IdIntent" />
+        <activity android:name=".FriendActivity" />
+        <activity android:name=".FriendPopup"></activity>
     </application>
 
 </manifest>

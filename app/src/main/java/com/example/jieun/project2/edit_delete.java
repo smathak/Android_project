@@ -15,6 +15,8 @@ public class edit_delete extends AppCompatActivity {
     Double longitude;
     String _id;
 
+    int year, month, day;
+    int hour, minute;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,7 @@ public class edit_delete extends AppCompatActivity {
         contentText.setText(content);
     }
 
+
     public void editThing(View view){
         EditText titleText = (EditText)findViewById(R.id.titleText);
         EditText contentText = (EditText)findViewById(R.id.contentText);
@@ -46,6 +49,8 @@ public class edit_delete extends AppCompatActivity {
         intent.putExtra("latitude", latitude);
         intent.putExtra("longitude", longitude);
         intent.putExtra("_id", _id);
+
+
         setResult(Activity.RESULT_OK, intent);
         finish();
     }

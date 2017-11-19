@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.jieun.project2.ThingsToDo">
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -58,12 +59,16 @@
             android:onClick="addThings"
             android:text="Add" />
 
-        <TimePicker
-            android:id="@+id/timePicker"
+        <Button
+            android:id="@+id/pickButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_below="@+id/textView" />
+            android:layout_above="@+id/addButton"
+            android:layout_alignEnd="@+id/addButton"
+            android:layout_marginBottom="26dp"
+            android:onClick="pickPress"
+            android:text="Pick date and time" />
 
     </RelativeLayout>
+
 </android.support.constraint.ConstraintLayout>

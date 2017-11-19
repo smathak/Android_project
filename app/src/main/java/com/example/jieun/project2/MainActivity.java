@@ -1,9 +1,13 @@
 package com.example.jieun.project2;
 
 import android.*;
+import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -18,18 +22,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.Marker;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements LocationListener{
+    // DB
+    private SQLiteDatabase mDB;
+    Cursor mCursor;
 
     // GPS
     private GoogleApiClient googleApiClient;
@@ -42,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     // Geocoding
     Geocoder geocoder;
     List<Address> addresses;
+
+    TextView nameExist;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +77,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
                 ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION)!= PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED)
             return;
+
+        // DB
+        FeedReaderDbHelper mDbHelper = new FeedReaderDbHelper(this);
+        mDB = mDbHelper.getWritableDatabase();
+        mDbHelper.onCreate(mDB);
 
         handler = new Handler();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -100,6 +119,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         }catch(SecurityException e){
             e.printStackTrace();
         }
+        // GCM
+        Intent regisIntent = new Intent(this, RegistrationService.class);
+        startService(regisIntent);
+
+        // Show google map
         Intent ToTheMapIntent = new Intent(this, MapsActivity.class);
         startActivity(ToTheMapIntent);
     }
@@ -127,4 +151,50 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 //        }
 //        Log.i("notice", "onDestroy");
 //    }
+
+     public void createName(View view){
+         Intent idIntent = new Intent(this, IdIntent.class);
+         startActivityForResult(idIntent, 0);
+     }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == 0) {
+            if (resultCode == Activity.RESULT_OK) {
+                String nickname = intent.getStringExtra("nickname");
+                ContentValues name = new ContentValues();
+                name.put("myname", nickname);
+                mDB.insert("myname_table", null, name);
+            }
+        }
+    }
+
+    public void startWithID(View view){
+
+        EditText nameText = (EditText)findViewById(R.id.nameText) ;
+        String myname = nameText.getText().toString();
+        // 데이터 베이스에 해당 name이 있는 지 없는 지 확인
+        mCursor = mDB.query("myname_table", new String[] {"myname"},
+                "myname=?", new String[]{myname}, null, null, null);
+        Log.i("notice", "test: "+mCursor.toString());
+        if(mCursor != null) {   // 있으면 MapActivity 에 이름을 넘겨준다.
+            Log.i("notice", "MainActivity: " + "mCursor is not null");
+            if (mCursor.moveToFirst()) {
+                myname = mCursor.getString(0);  // 이름만 구한다.
+                // Show google map
+                Intent ToTheMapIntent = new Intent(this, MapsActivity.class);
+                ToTheMapIntent.putExtra("myname", myname);
+                startActivity(ToTheMapIntent);
+            } else {
+                Log.i("notice", "MainActivity: " + "no such name");
+                nameExist = (TextView) findViewById(R.id.nameExist);
+                nameExist.setText("No such name");
+            }
+        }
+    }
+    public void onStart(){
+        super.onStart();
+        nameExist = (TextView) findViewById(R.id.nameExist);
+        nameExist.setText(" ");
+    }
 }

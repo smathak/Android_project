@@ -3,7 +3,6 @@ package com.example.jieun.project2;
 import android.*;
 import android.Manifest;
 import android.app.Activity;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -22,21 +21,17 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 
@@ -45,19 +40,13 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.drive.Drive;
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingApi;
 import com.google.android.gms.location.GeofencingClient;
-import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.GeofencingRequest;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.GeoDataApi;
-import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -66,7 +55,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.wearable.CapabilityApi;
 
 import org.w3c.dom.Text;
 
@@ -89,8 +77,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             addresses = geocoder.getFromLocation(lat, lng, 1);
             String featureName = addresses.get(0).getFeatureName();
 
-            Toast.makeText(this, "OnMapActivity: Latitude: "+location.getLatitude()+ "\nLongitude: "+location.getLongitude()+
-                    "\nCurrent location: "+featureName, Toast.LENGTH_LONG).show();
+//            Toast.makeText(this, "OnMapActivity: Latitude: "+location.getLatitude()+ "\nLongitude: "+location.getLongitude()+
+//                    "\nCurrent location: "+featureName, Toast.LENGTH_LONG).show();
         }catch(IOException e) {
             e.printStackTrace();
         }
@@ -113,10 +101,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // BroadCast Receiver
     BroadcastReceiver broadcastReceiver;
     IntentFilter filter;
-
-    // Popup
-    Intent popupIntent;
-    Vibrator v;
+    BroadcastReceiver gcmReceiver;
+    IntentFilter gcmFilter;
 
     // Geocoding
     Geocoder geocoder;
@@ -131,6 +117,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     PendingIntent pendingIntent;
     GeofencingRequest geofencingRequest;
     GeofencingClient geofencingClient;
+
+    String nickname;
+    String friend;
+    AppServer appServer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,22 +173,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 //        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
 
-        popupIntent = new Intent(getApplicationContext(), Popup.class);
-        v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
-
         filter = new IntentFilter();
         filter.addAction("my.broadcast.proximity");
 
+        // GeofenceTransitionIntentService에서 Broadcast를 받으면
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String text = intent.getStringExtra("text");
-
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                myService.sendNotification(text);
+                myService.sendNotification(text); // myService의 Notification을 호출
             }
         };
         registerReceiver(broadcastReceiver, filter);
+
+        gcmFilter = new IntentFilter();
+        gcmFilter.addAction("my.broadcast.gcmListener");
+
+        gcmReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String message = intent.getStringExtra("gcmRegister");
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                myService.GcmNotification(message);
+            }
+        };
+        registerReceiver(gcmReceiver, gcmFilter);
 
         geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());       // Geocode
         Intent serviceIntent = new Intent(getApplicationContext(), MyService.class);
@@ -210,6 +209,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Intent gintent = new Intent(this, GeofenceTransitionIntentService.class);
         pendingIntent = PendingIntent.getBroadcast(this, 0, gintent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+        appServer = new AppServer();
     }
 
 
@@ -278,11 +278,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 do {
                     Double lat, lng;
                     String title, content, featureName;
+                    int year, month, day, hour, minute;
                     // title, content, lat, lng
                     title = mCursor.getString(i++);
                     content = mCursor.getString(i++);
                     lat = mCursor.getDouble(i++);
-                    lng = mCursor.getDouble(i);
+                    lng = mCursor.getDouble(i++);
                     featureName = mCursor.getString(i++);
                     mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(new LatLng(lat, lng)));
                     i = 0;
@@ -366,45 +367,63 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 String mode = intent.getStringExtra("mode");
                 Double lat = intent.getDoubleExtra("latitude", 0);
                 Double lng = intent.getDoubleExtra("longitude", 0);
+                Log.i("notice", "lat: "+lat+", lng: "+lng);
                 LatLng position = new LatLng(lat, lng);
                 String address;
                 String featureName =" ";
+                friend = intent.getStringExtra("friend");
+                Log.i("notice", "nickname: "+nickname+", friend: "+friend);
+
+                int year = intent.getIntExtra("year", 0);
+                int month = intent.getIntExtra("month", 0);
+                int day = intent.getIntExtra("day", 0);
+
+                int hour = intent.getIntExtra("hour", 0);
+                int minute = intent.getIntExtra("minute", 0);
+                Log.i("notice", "test year: "+year);
 
                 ContentValues values = new ContentValues();
                 values.put("title", title); values.put("content", content);
                 values.put("latitude", lat); values.put("longitude", lng);
+                values.put("year", year);  values.put("month", month);  values.put("day", day);
+                values.put("hour", hour);  values.put("minute", minute);
 
                 try {
-                    addresses = geocoder.getFromLocation(lat, lng, 1);
-                    address = addresses.get(0).getAddressLine(0);
-                    featureName = addresses.get(0).getFeatureName();
-                    Log.i("notice", address+", "+featureName);
-                    values.put("featureName", featureName);
+                    if (lat != 0.0 && lng != 0.0) {
+                        addresses = geocoder.getFromLocation(lat, lng, 1);
+                        address = addresses.get(0).getAddressLine(0);
+                        featureName = addresses.get(0).getFeatureName();
+                        Log.i("notice", address+", "+featureName);
+                        values.put("featureName", featureName);
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                // Save it to SQLite
-                if(mode.equals("insert")){
-                    mDB.insert("things_table", null, values);
-                    renewed = mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(position));
-                    redraw_map(renewed, "insert");
+                if(mode!=null){
+                    // Save it to SQLite
+                    if(mode.equals("insert")){
+                        mDB.insert("things_table", null, values);
+                        renewed = mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(position));
+                        redraw_map(renewed, "insert");
+                    }
+
+                    // Update marker
+                    if(mode.equals("update")) {
+                        String _id = intent.getStringExtra("_id");
+                        mDB.update("things_table", values, "_id=" + _id, null);
+                        newContent = content;
+                        redraw_map(renewed, "update");
+                    }
+
+                    // Delete marker
+                    if(mode.equals("delete")){
+                        String _id = intent.getStringExtra("_id");
+                        mDB.delete("things_table", "_id="+_id, null);
+                        redraw_map(renewed, "delete");
+                    }
                 }
 
-                // Update marker
-                if(mode.equals("update")) {
-                    String _id = intent.getStringExtra("_id");
-                    mDB.update("things_table", values, "_id=" + _id, null);
-                    newContent = content;
-                    redraw_map(renewed, "update");
-                }
-
-                // Delete marker
-                if(mode.equals("delete")){
-                    String _id = intent.getStringExtra("_id");
-                    mDB.delete("things_table", "_id="+_id, null);
-                    redraw_map(renewed, "delete");
-                }
             }
         }
     }
@@ -413,6 +432,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.clear(); // clear map first
         Constants.POPUP_MESSAGE.clear(); // insert, update, delete 를 눌러도 모두 clear 해야 한다.
         geofenceList.clear();
+        // 1. clear existed geofence;
+        removeGeofences(); // 1. clear
 
         // redraw
         mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName"}, null, null, null, null, "_id");
@@ -422,6 +443,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 do {
                     Double lat, lng;
                     String title, content, featureName;
+                    int year, month, day, hour, minute;
                     // title, content, lat, lng
                     title = mCursor.getString(i++);
                     content = mCursor.getString(i++);
@@ -432,13 +454,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     mMap.addMarker(new MarkerOptions().title(title).snippet(content)
                             .position(new LatLng(lat, lng)));
                     // renew Constants
-                    Constants.POPUP_MESSAGE.put("Title: " + title + "\nThings todo: " + content+"\nAt: "+featureName, new LatLng(lat, lng));
+                    Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
                     i = 0;
                 } while (mCursor.moveToNext());
             }
-
-        // 1. clear existed geofence;
-        removeGeofences(); // 1. clear
 
         // 2. renew all the other geofences
         geofenceUpdate();
@@ -462,6 +481,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }catch(SecurityException e){
                     e.printStackTrace();
                 }
+                return true;
+            case R.id.gcmFriend:
+                Intent friendIntent = new Intent(this, FriendActivity.class);
+                startActivityForResult(friendIntent, 0);
+                // 친구 등록 (친구 구독 - subscribe)
+                if(friend!=null) {
+                    appServer.registerFriend(friend);
+                }
+
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -495,12 +524,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 do {
                     Double lat, lng;
                     String title, content, featureName;
+                    int year, month, day, hour, minute;
                     // title, content, lat, lng
                     title = mCursor.getString(i++);
                     content = mCursor.getString(i++);
                     lat = mCursor.getDouble(i++);
-                    lng = mCursor.getDouble(i);
+                    lng = mCursor.getDouble(i++);
                     featureName = mCursor.getString(i++);
+                    year = mCursor.getInt(i++);
+                    month = mCursor.getInt(i++);
+                    day = mCursor.getInt(i++);
+                    hour = mCursor.getInt(i++);
+                    minute = mCursor.getInt(i);
                     Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
                     i = 0;
                 } while (mCursor.moveToNext());
@@ -536,12 +571,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(geofenceList);
-        geofencingRequest = builder.build();
+        try{
+            geofencingRequest = builder.build();    // it will cause IllegalArumentException if geofenceList is empty
+        }catch(IllegalArgumentException e){
+            e.printStackTrace();
+        }
+
 
         try{
             // Start tracking user's current location and compare with marker's position and send broadcast
             LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
         }catch(SecurityException e){
+            e.printStackTrace();
+        }catch(NullPointerException e){
             e.printStackTrace();
         }
     }

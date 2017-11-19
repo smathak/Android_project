@@ -2,6 +2,7 @@ package com.example.jieun.project2;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -17,6 +18,10 @@ public class ThingsToDo extends AppCompatActivity {
     LatLng position;
     Intent intent;
 
+    int year, month, day;
+    int hour, minute;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,6 +31,23 @@ public class ThingsToDo extends AppCompatActivity {
         latitude = intent.getDoubleExtra("latitude", 0);
         longitude = intent.getDoubleExtra("longitude", 0);
 //        Log.i("notice", position.toString());
+    }
+
+    public void pickPress(View view){
+        Intent pickIntent = new Intent(this, DateTime.class);
+        startActivityForResult(pickIntent, 0);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent pickIntent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == 0) {
+            year = pickIntent.getIntExtra("year", 0);
+            month = pickIntent.getIntExtra("month", 0);
+            day = pickIntent.getIntExtra("day", 0);
+
+            hour = pickIntent.getIntExtra("hour", 0);
+            minute = pickIntent.getIntExtra("minute", 0);
+        }
     }
 
     public void addThings(View view){
@@ -39,7 +61,16 @@ public class ThingsToDo extends AppCompatActivity {
         intent.putExtra("content", content);
         intent.putExtra("latitude", latitude);
         intent.putExtra("longitude", longitude);
+
+        intent.putExtra("year", year);
+        intent.putExtra("month", month);
+        intent.putExtra("day", day);
+
+        intent.putExtra("hour", hour);
+        intent.putExtra("minute", minute);
+
         setResult(Activity.RESULT_OK, intent);
         finish();
     }
+
 }
