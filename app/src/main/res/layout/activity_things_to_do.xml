@@ -55,19 +55,37 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="11dp"
             android:onClick="addThings"
             android:text="Add" />
 
         <Button
-            android:id="@+id/pickButton"
+            android:id="@+id/chooseMyFriend"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_above="@+id/addButton"
+            android:layout_alignStart="@+id/addButton"
+            android:layout_below="@+id/contentText"
+            android:layout_marginTop="20dp"
+            android:onClick="choosePress"
+            android:text="Choose my friend" />
+
+        <Button
+            android:id="@+id/sendToMyFriend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/chooseMyFriend"
+            android:layout_alignBottom="@+id/chooseMyFriend"
             android:layout_alignEnd="@+id/addButton"
-            android:layout_marginBottom="26dp"
-            android:onClick="pickPress"
-            android:text="Pick date and time" />
+            android:onClick="sendPress"
+            android:text="Send to my friend" />
+
+        <TextView
+            android:id="@+id/friendName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignStart="@+id/contentText"
+            android:layout_below="@+id/chooseMyFriend"
+            android:layout_marginTop="12dp"
+            android:text="TextView" />
 
     </RelativeLayout>
 

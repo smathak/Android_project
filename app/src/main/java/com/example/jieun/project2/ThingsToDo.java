@@ -5,22 +5,24 @@ import android.content.Intent;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
+
+import org.w3c.dom.Text;
 
 public class ThingsToDo extends AppCompatActivity {
     String title;
     String content;
-    Double latitude;
-    Double longitude;
+    public static Double latitude;
+    public static Double longitude;
     LatLng position;
     Intent intent;
 
-    int year, month, day;
-    int hour, minute;
-
+    AppServer appServer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,24 +32,8 @@ public class ThingsToDo extends AppCompatActivity {
         intent = getIntent();
         latitude = intent.getDoubleExtra("latitude", 0);
         longitude = intent.getDoubleExtra("longitude", 0);
-//        Log.i("notice", position.toString());
-    }
 
-    public void pickPress(View view){
-        Intent pickIntent = new Intent(this, DateTime.class);
-        startActivityForResult(pickIntent, 0);
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent pickIntent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-        if (requestCode == 0) {
-            year = pickIntent.getIntExtra("year", 0);
-            month = pickIntent.getIntExtra("month", 0);
-            day = pickIntent.getIntExtra("day", 0);
-
-            hour = pickIntent.getIntExtra("hour", 0);
-            minute = pickIntent.getIntExtra("minute", 0);
-        }
+        appServer = new AppServer();
     }
 
     public void addThings(View view){
@@ -62,15 +48,36 @@ public class ThingsToDo extends AppCompatActivity {
         intent.putExtra("latitude", latitude);
         intent.putExtra("longitude", longitude);
 
-        intent.putExtra("year", year);
-        intent.putExtra("month", month);
-        intent.putExtra("day", day);
-
-        intent.putExtra("hour", hour);
-        intent.putExtra("minute", minute);
-
         setResult(Activity.RESULT_OK, intent);
         finish();
     }
 
+    public void choosePress(View view){
+        Intent sendIntent = new Intent(this, FriendList.class);
+        startActivityForResult(sendIntent, 0);
+    }
+
+    String friendName;
+    String friendToken;
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == 0) {
+            if (resultCode == Activity.RESULT_OK) {
+                friendName = intent.getStringExtra("friendName");
+                friendToken = intent.getStringExtra("friendToken");
+                TextView textView = (TextView)findViewById(R.id.friendName);
+                textView.setText(friendName);
+            }
+        }
+    }
+
+    public void sendPress(View view){
+        EditText titleText = (EditText)findViewById(R.id.titleText);
+        EditText contentText = (EditText)findViewById(R.id.contentText);
+        title = titleText.getText().toString();
+        content = contentText.getText().toString();
+
+        appServer.sendMarker(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude);
+        finish();
+    }
 }

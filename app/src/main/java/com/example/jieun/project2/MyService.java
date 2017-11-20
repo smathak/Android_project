@@ -70,22 +70,21 @@ public class MyService extends Service {
 
     }
 
-    public void GcmNotification(String message){
-
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+    public void GcmNotification(String friendName, String friendToken){
 
         // Notification
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Notification을 누르면  팝업창이 뜬다.
         Intent notificationIntent = new Intent(this, FriendPopup.class);
-        notificationIntent.putExtra("text", message);
+        notificationIntent.putExtra("friendName", friendName);
+        notificationIntent.putExtra("friendToken", friendToken);
         notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setContentTitle("MjRemider: Friend Request!!")
-                .setContentText(message)
+                .setContentText(friendName)
                 .setSmallIcon(R.mipmap.icon)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)

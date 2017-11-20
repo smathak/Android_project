@@ -104,6 +104,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     IntentFilter filter;
     BroadcastReceiver gcmReceiver;
     IntentFilter gcmFilter;
+    IntentFilter markerFilter;
+    BroadcastReceiver markerReceiver;
 
     // Geocoding
     Geocoder geocoder;
@@ -193,12 +195,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         gcmReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String message = intent.getStringExtra("gcmRegister");
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-                myService.GcmNotification(message);
+                String friendName = intent.getStringExtra("friendName");
+                String friendToken = intent.getStringExtra("friendToken");  // 친구 이름과 그 토큰을 저장해야 함.
+                Toast.makeText(getApplicationContext(), friendName, Toast.LENGTH_LONG).show();
+                String message = intent.getStringExtra("acceptMessage");
+                if(message!=null && message.equals("accepted your request")){
+                    myService.sendNotification(friendName+" "+message);     // 수락 메세지 보내기
+                }else{
+                    myService.GcmNotification(friendName, friendToken);
+                }
             }
         };
         registerReceiver(gcmReceiver, gcmFilter);
+
+        markerFilter = new IntentFilter();
+        markerFilter.addAction("my.broadcast.markerListener");
+
+        markerReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String title = intent.getStringExtra("title");
+                String content = intent.getStringExtra("content");
+                String featureName = intent.getStringExtra("featureName");
+                String sender_name = intent.getStringExtra("sender_name");
+                Double lat = intent.getDoubleExtra("latitude", 0.0);
+                Double lng = intent.getDoubleExtra("longitude", 0.0);
+                String message = "Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nFrom: "+sender_name;
+                myService.sendNotification(message);
+                redraw_map("gcm");
+            }
+        };
+        registerReceiver(markerReceiver, markerFilter);
 
         geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());       // Geocode
         Intent serviceIntent = new Intent(getApplicationContext(), MyService.class);
@@ -271,6 +298,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    public GoogleMap getGoogleMap(){
+        return mMap;
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -282,13 +313,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
         // mDB query
-        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName"}, null, null, null, null, "_id");
+        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName", "sender_name"},
+                null, null, null, null, "_id");
         int i = 0;
         if(mCursor!=null) {
             if (mCursor.moveToPosition(0)) {
                 do {
                     Double lat, lng;
-                    String title, content, featureName;
+                    String title, content, featureName, sender_name;
                     int year, month, day, hour, minute;
                     // title, content, lat, lng
                     title = mCursor.getString(i++);
@@ -296,7 +328,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     lat = mCursor.getDouble(i++);
                     lng = mCursor.getDouble(i++);
                     featureName = mCursor.getString(i++);
-                    mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(new LatLng(lat, lng)));
+                    sender_name = mCursor.getString(i);
+
+                    sender_name = mCursor.getString(i);
+                    if(sender_name != null){
+                        Log.i("notice", "sender_name is: "+sender_name);
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+" from: "+sender_name)
+                                .position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
+                    }else{
+
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content)
+                                .position(new LatLng(lat, lng)));
+                    }
                     i = 0;
                 } while (mCursor.moveToNext());
             }
@@ -388,19 +431,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     appServer.registerFriend(friend);
                 }
 
-                int year = intent.getIntExtra("year", 0);
-                int month = intent.getIntExtra("month", 0);
-                int day = intent.getIntExtra("day", 0);
-
-                int hour = intent.getIntExtra("hour", 0);
-                int minute = intent.getIntExtra("minute", 0);
-                Log.i("notice", "test year: "+year);
-
                 ContentValues values = new ContentValues();
                 values.put("title", title); values.put("content", content);
                 values.put("latitude", lat); values.put("longitude", lng);
-                values.put("year", year);  values.put("month", month);  values.put("day", day);
-                values.put("hour", hour);  values.put("minute", minute);
 
                 try {
                     if (lat != 0.0 && lng != 0.0) {
@@ -419,7 +452,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if(mode.equals("insert")){
                         mDB.insert("things_table", null, values);
                         renewed = mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(position));
-                        redraw_map(renewed, "insert");
+                        redraw_map("insert");
                     }
 
                     // Update marker
@@ -427,14 +460,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         String _id = intent.getStringExtra("_id");
                         mDB.update("things_table", values, "_id=" + _id, null);
                         newContent = content;
-                        redraw_map(renewed, "update");
+                        redraw_map("update");
                     }
 
                     // Delete marker
                     if(mode.equals("delete")){
                         String _id = intent.getStringExtra("_id");
                         mDB.delete("things_table", "_id="+_id, null);
-                        redraw_map(renewed, "delete");
+                        redraw_map("delete");
                     }
                 }
 
@@ -442,7 +475,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void redraw_map(Marker renewed, String mode){
+    public void redraw_map(String mode){
         mMap.clear(); // clear map first
         Constants.POPUP_MESSAGE.clear(); // insert, update, delete 를 눌러도 모두 clear 해야 한다.
         geofenceList.clear();
@@ -450,31 +483,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         removeGeofences(); // 1. clear
 
         // redraw
-        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName"}, null, null, null, null, "_id");
+        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName", "sender_name"},
+                null, null, null, null, "_id");
         int i = 0;
         if(mCursor!=null)
             if (mCursor.moveToPosition(0)) {
                 do {
                     Double lat, lng;
-                    String title, content, featureName;
+                    String title, content, featureName, sender_name;
                     int year, month, day, hour, minute;
                     // title, content, lat, lng
                     title = mCursor.getString(i++);
                     content = mCursor.getString(i++);
                     lat = mCursor.getDouble(i++);
                     lng = mCursor.getDouble(i++);
-                    featureName = mCursor.getString(i);
+                    featureName = mCursor.getString(i++);
+                    sender_name = mCursor.getString(i);
+                    if(sender_name != null){
+                        Log.i("notice", "sender_name is: "+sender_name);
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+"from: "+sender_name)
+                                .position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
+                        // renew Constants
+                        Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nFrom: "+sender_name, new LatLng(lat, lng));
+                    }else{
 
-                    mMap.addMarker(new MarkerOptions().title(title).snippet(content)
-                            .position(new LatLng(lat, lng)));
-                    // renew Constants
-                    Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content)
+                                .position(new LatLng(lat, lng)));
+                        // renew Constants
+                        Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
+                    }
+
                     i = 0;
                 } while (mCursor.moveToNext());
             }
 
-        // 2. renew all the other geofences
-        geofenceUpdate();
+        if(mode.equals("delete")){
+            // do nothing
+        }else{
+            // 2. renew all the other geofences
+            geofenceUpdate();
+        }
+
+
     }
 
     public boolean onCreateOptionsMenu(Menu menu){
@@ -491,7 +541,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return true;
             case R.id.request:
                 try{
-                    LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
+                    if(geofencingRequest != null){
+                        LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
+                    }
                 }catch(SecurityException e){
                     e.printStackTrace();
                 }
@@ -582,10 +634,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             e.printStackTrace();
         }
 
-
         try{
             // Start tracking user's current location and compare with marker's position and send broadcast
-            LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
+            if(geofencingRequest != null){
+                LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
+            }
         }catch(SecurityException e){
             e.printStackTrace();
         }catch(NullPointerException e){

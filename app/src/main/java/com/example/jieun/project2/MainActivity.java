@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        // Google privacy
         String[] permissions = new String[]{android.Manifest.permission.INTERNET,
                 android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION};
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -176,7 +176,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         // 데이터 베이스에 해당 name이 있는 지 없는 지 확인
         mCursor = mDB.query("myname_table", new String[] {"myname"},
                 "myname=?", new String[]{myname}, null, null, null);
-        Log.i("notice", "test: "+mCursor.toString());
         if(mCursor != null) {   // 있으면 MapActivity 에 이름을 넘겨준다.
             if (mCursor.moveToFirst()) {
                 myname = mCursor.getString(0);  // 이름만 구한다.

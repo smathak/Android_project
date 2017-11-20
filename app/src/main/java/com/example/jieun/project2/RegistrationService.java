@@ -28,27 +28,11 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
 public class RegistrationService extends IntentService {
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-
     public RegistrationService() {
         super("RegistrationService");
     }
 
-    /**
-     * Starts this service to perform action Foo with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
     private final Context mContext = this;
     private static final String[] TOPICS = {"friendrequest"};
     JSONArray registration_ids = new JSONArray();
@@ -70,8 +54,9 @@ public class RegistrationService extends IntentService {
                             GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
                     registration_ids.put(Arrays.asList(token));
 
-//                    AppServer appServer = new AppServer();
-//                    appServer.send(token, registration_ids);
+                    AppServer appServer = new AppServer();
+                    appServer.setToken(token);
+                    Constants.MY_TOKEN = token;
 
                     pubSub = GcmPubSub.getInstance(mContext);
                     pubSub.subscribe(token, "/topics/"+Constants.MY_NAME, null);    // 나에게 오는 친구 신청을 받는다.
@@ -85,10 +70,7 @@ public class RegistrationService extends IntentService {
                 return null;
             }
         }.execute();
-
-
 //       Once you've received your registration token, make sure to send it to your server.
-
     }
 
     public void subscribeTopics(String friend) throws IOException {

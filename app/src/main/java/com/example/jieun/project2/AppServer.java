@@ -26,10 +26,11 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class AppServer {
 
-    String server_key = "AAAAgkUXc-0:APA91bHpxOFapwTWJATAGNYLlQ0HcXW3k4RrsfekWb-VMx-LYrjBSJM2UMWTegoSfPbollQY0svzv7MioTp-JpA5niHD2YhpM19PvwU14_fu4EUyU1yNw6WuLa5PiWdhikKXNvzCND-n"; // Server key(For app Server in Firebase)
-    String sender_id = "559504913389";
+    String server_key = ""; // Server key(For app Server in Firebase)
+    String sender_id = "";
     JSONObject jsonObject = new JSONObject();
     JSONObject down = new JSONObject();
+    public static String token;
     // GCM Server HTTP 방식
 //        https://android.googleapis.com/gcm/notification
 //        https://gcm-http.googleapis.com/gcm/send
@@ -39,8 +40,14 @@ public class AppServer {
     public void connect(){
 
     }
+    public void setToken(String t){
+        this.token = t;
+    }
+    public String getToken(){
+        return this.token;
+    }
 
-    public void send(final String token, final JSONArray registration_ids){
+    public void sendAcceptMessage(final String myname, final String friendToken){
 
         new AsyncTask<Void, Void, Void>() {
 
@@ -61,14 +68,15 @@ public class AppServer {
 
                     OutputStream output = http.getOutputStream();
                     try {
-                        jsonObject.accumulate("operation", "create");
-                        jsonObject.accumulate("notification_key_name", "appUser-jieun");
-                        jsonObject.accumulate("registrations_ids", registration_ids);
+//                        jsonObject.accumulate("operation", "create");
+//                        jsonObject.accumulate("notification_key_name", "appUser-jieun");
+//                        jsonObject.accumulate("registrations_ids", registration_ids);
 
-                        // 내가 원하는 친구의 이름을 넣어 보낸다.
-                        down.accumulate("to", "/topics/"+"jieun");  // 테스트용(추후 수정)
+                        down.accumulate("to", friendToken);  // 친구 토큰을 이용하여 친구에게 보냄
                         JSONObject message = new JSONObject();
-                        message.put("message", "jieun");
+                        message.put("name", Constants.MY_NAME);    // 내 이름(나의 이름을 밝힘)
+                        message.put("token", Constants.MY_TOKEN);   // 나의 토큰도 전달해야지 친구가 나에게도 메세지를 보낼 수 있음
+                        message.put("message", "accepted your request"); // 수락 했다는 안내 메세지를 전달
                         down.put("data", message);
 
                     } catch (JSONException e) {
@@ -106,7 +114,7 @@ public class AppServer {
 
     }
 
-    public void registerFriend(final String friend){
+    public void registerFriend(final String message){
         new AsyncTask<Void, Void, Void>() {
 
             @Override
@@ -125,10 +133,10 @@ public class AppServer {
 
                     OutputStream output = http.getOutputStream();
                     try {
-                        // 친구가 jieun 이라 가정. 나중에 friend로 바꾼다.
-                        down.accumulate("to", "/topics/"+friend);
+                        down.accumulate("to", "/topics/"+message);  // message는 친구 이름
                         JSONObject message = new JSONObject();
-                        message.put("message", friend);
+                        message.put("name", Constants.MY_NAME); // 나의 이름
+                        message.put("token", getToken());   // 나의 토큰
                         down.put("data", message);
 
                     } catch (JSONException e) {
@@ -165,8 +173,73 @@ public class AppServer {
         }.execute();
     }
 
+    public void sendMarker(final String myname, final String friendName, final String friendToken,
+                           final String title, final String content, final Double lat, final Double lng){
+        new AsyncTask<Void, Void, Void>() {
 
+            @Override
+            protected Void doInBackground(Void... voids) {
+                try {
+                    URL url_down = new URL(" https://gcm-http.googleapis.com/gcm/send");
+                    HttpsURLConnection http = (HttpsURLConnection)url_down.openConnection();
+                    http.setRequestProperty("Content-Type", "application/json");
+                    http.setRequestProperty("Authorization", "key="+server_key);
+                    http.setRequestMethod("POST");
+                    http.setRequestProperty("project_id", sender_id);
+
+                    http.setDoOutput(true);
+                    http.setDoInput(true);
+                    http.connect();
+
+                    OutputStream output = http.getOutputStream();
+                    try {
+                        down.accumulate("to", friendToken);
+                        JSONObject message = new JSONObject();
+                        message.put("sender_name", myname); // 보낸 사람 이름
+                        message.put("title", title);
+                        message.put("content", content);
+                        Log.i("notice", "AppServer: "+lat);
+                        message.put("latitude", String.valueOf(lat));
+                        message.put("longitude", String.valueOf(lng));
+                        message.put("category", "marker");
+                        down.put("data", message);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    String json = jsonObject.toString();
+                    String downstream = down.toString();
+                    Log.i("notice", json);
+
+                    output.write(downstream.getBytes("UTF-8"));
+                    output.flush();
+                    output.close();
+                    Log.i("notice", "test http request post: "+http.getResponseCode());
+                    Log.i("notice", "test http request message: "+http.getResponseMessage());
+
+                    InputStream input = http.getInputStream();
+                    byte[] buffer = new byte[1024];
+                    while(input.available() > 0){
+                        int readCount = input.read(buffer);
+                        if(readCount>0){
+                            String read = new String(buffer, 0, readCount);
+                            Log.i("notice", read);
+                        }
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+
+                return null;
+            }
+        }.execute();
+    }
 }
+
+
 
 
 //            String json = "{\"operation\": "+"\"create\""+ ","+
