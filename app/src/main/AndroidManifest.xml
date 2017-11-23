@@ -112,7 +112,11 @@
         <activity android:name=".IdIntent" />
         <activity android:name=".FriendActivity" />
         <activity android:name=".FriendPopup" />
-        <activity android:name=".FriendList"></activity>
+        <activity android:name=".FriendList" />
+
+        <service
+            android:name=".DateTimeService"
+            android:exported="false"></service>
     </application>
 
 </manifest>

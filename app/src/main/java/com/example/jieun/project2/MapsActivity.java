@@ -19,7 +19,6 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -34,13 +33,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.gcm.GcmPubSub;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
@@ -61,6 +58,8 @@ import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -95,7 +94,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location lastLocation;
     private LocationRequest locationRequest;
     boolean isGPSEnabled;
-    Handler handler;
+
 
     String newContent;  // update variable
 
@@ -156,7 +155,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDB = mDbHelper.getWritableDatabase();
         mDbHelper.onCreate(mDB);
 
-        handler = new Handler();
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
@@ -244,10 +243,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         myname = mainIntent.getStringExtra("myname");
         Constants.MY_NAME =myname;
 
-
-        // 내 이름을 구독
-        // 나(Client App)dl topic/myname 을 App server 로 부터 받으면 GcmListener 가 호출된다.
-
+        // Time
+        Intent timeIntent = new Intent(this, DateTimeService.class);
+        startService(timeIntent);
     }
 
 
@@ -268,7 +266,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onStart(){
         super.onStart();
         if (isGPSEnabled == true)  Log.i("notice", "gps turned on");
-
     }
 
     //    public void onStop(){
@@ -336,7 +333,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         mMap.addMarker(new MarkerOptions().title(title).snippet(content+" from: "+sender_name)
                                 .position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
                     }else{
-
                         mMap.addMarker(new MarkerOptions().title(title).snippet(content)
                                 .position(new LatLng(lat, lng)));
                     }
@@ -358,7 +354,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener(){
             @Override
             public void onInfoWindowLongClick(Marker marker){
-                edit_delete_func(marker, marker.getTitle(), marker.getSnippet(), marker.getPosition());
+                String split[] = marker.getSnippet().toString().split("from");
+                String snippet = split[0];
+                edit_delete_func(marker, marker.getTitle(), snippet, marker.getPosition());
             }
         });
 
@@ -427,6 +425,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 String featureName =" ";
                 friend = intent.getStringExtra("friend");
                 // 친구 등록 (친구 구독 - subscribe)
+
+                int year = intent.getIntExtra("year", 0);
+                int month = intent.getIntExtra("month", 0);
+                int day = intent.getIntExtra("day", 0);
+                int hour = intent.getIntExtra("hour", 0);
+                int minute = intent.getIntExtra("minute", 0);
+                Log.i("notice", "MapActivity: "+year);
+
                 if(friend!=null) {  // friend의 이름을 App server 에서 client app 으로 보낸다
                     appServer.registerFriend(friend);
                 }
@@ -435,6 +441,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 values.put("title", title); values.put("content", content);
                 values.put("latitude", lat); values.put("longitude", lng);
 
+                values.put("year", year); values.put("month", month); values.put("day", day);
+                values.put("hour", hour); values.put("minute", minute);
                 try {
                     if (lat != 0.0 && lng != 0.0) {
                         addresses = geocoder.getFromLocation(lat, lng, 1);
@@ -470,7 +478,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         redraw_map("delete");
                     }
                 }
-
             }
         }
     }

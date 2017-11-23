@@ -20,6 +20,11 @@ public final class FeedReaderContract {
         public static final String COLUMN_NAME_LONGITUDE = "longitude";
         public static final String COLUMN_NAME_FEATURENAME = "featureName";
         public static final String COLUMN_NAME_SENDER = "sender_name";
+        public static final String COLUMN_NAME_YEAR = "year";
+        public static final String COLUMN_NAME_MONTH = "month";
+        public static final String COLUMN_NAME_DAY = "day";
+        public static final String COLUMN_NAME_HOUR = "hour";
+        public static final String COLUMN_NAME_MINUTE = "minute";
 
 
         public static final String MYNAME_TABLE = "myname_table";
@@ -38,7 +43,12 @@ public final class FeedReaderContract {
                     FeedEntry.COLUMN_NAME_LATITUDE + " double, " +
                     FeedEntry.COLUMN_NAME_LONGITUDE + " double, " +
                     FeedEntry.COLUMN_NAME_FEATURENAME + " text, " +
-                    FeedEntry.COLUMN_NAME_SENDER + " text" + ")";
+                    FeedEntry.COLUMN_NAME_SENDER + " text, "+
+                    FeedEntry.COLUMN_NAME_YEAR + " int, " +
+                    FeedEntry.COLUMN_NAME_MONTH+ " int, "+
+                    FeedEntry.COLUMN_NAME_DAY+ " int, "+
+                    FeedEntry.COLUMN_NAME_HOUR+ " int, "+
+                    FeedEntry.COLUMN_NAME_MINUTE+ " int" + ")";
 
     public static final String SQL_CREATE_MYNAME_TABLE =
             "CREATE TABLE IF NOT EXISTS " + FeedEntry.MYNAME_TABLE + " ( " +

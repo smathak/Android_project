@@ -54,7 +54,7 @@ public class FriendPopup extends AppCompatActivity {
         friendName = intent.getStringExtra("friendName");   // 친구 이름
         friendToken = intent.getStringExtra("friendToken"); // 친구 토큰 -> DB에 저장하기
 
-        TextView titleText = (TextView)findViewById(R.id.textView);
+        TextView titleText = (TextView)findViewById(R.id.friendName);
         titleText.setText(friendName+" want to be your friend");
     }
 

@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.Vibrator;
@@ -18,6 +19,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+
+import java.util.Calendar;
 
 public class MyService extends Service {
     private final IBinder iBinder = new LocalBinder();
@@ -35,10 +38,6 @@ public class MyService extends Service {
 //        // TODO: Return the communication channel to the service.
 //        throw new UnsupportedOperationException("Not yet implemented");
         return iBinder;
-    }
-
-    public void test(){
-        Log.i("notice", "test service");
     }
 
 
@@ -96,5 +95,21 @@ public class MyService extends Service {
 
         notificationManager.notify(1234, builder.build());
 
+    }
+
+    Handler handler;
+    Calendar calendar;
+    public void dateTimeCheck(){
+
+        calendar = Calendar.getInstance();
+        handler = new Handler();
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.i("notice", "my service dateTimeCheck test");
+                handler.postDelayed(this, 5000);
+            }
+        }, 5000);
     }
 }

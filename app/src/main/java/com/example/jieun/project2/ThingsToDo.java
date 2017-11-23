@@ -22,6 +22,7 @@ public class ThingsToDo extends AppCompatActivity {
     LatLng position;
     Intent intent;
 
+    int year, month, day, hour, minute;
     AppServer appServer;
 
     @Override
@@ -48,7 +49,14 @@ public class ThingsToDo extends AppCompatActivity {
         intent.putExtra("latitude", latitude);
         intent.putExtra("longitude", longitude);
 
+        intent.putExtra("year", year);
+        intent.putExtra("month", month);
+        intent.putExtra("day", day);
+        intent.putExtra("hour", hour);
+        intent.putExtra("minute", minute);
+
         setResult(Activity.RESULT_OK, intent);
+        year=0; month = 0; day = 0; hour =0; minute =0;
         finish();
     }
 
@@ -63,10 +71,25 @@ public class ThingsToDo extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == 0) {
             if (resultCode == Activity.RESULT_OK) {
-                friendName = intent.getStringExtra("friendName");
-                friendToken = intent.getStringExtra("friendToken");
-                TextView textView = (TextView)findViewById(R.id.friendName);
-                textView.setText(friendName);
+                if(intent.getIntExtra("year", 0) == 0){
+                    friendName = intent.getStringExtra("friendName");
+                    friendToken = intent.getStringExtra("friendToken");
+                    TextView textView = (TextView)findViewById(R.id.friendName);
+                    textView.setText(friendName);
+                }
+
+                if(intent.getStringExtra("friendName")==null){
+                    year = intent.getIntExtra("year", 0);
+                    month = intent.getIntExtra("month", 0);
+                    day = intent.getIntExtra("day", 0);
+                    hour = intent.getIntExtra("hour", 0);
+                    minute = intent.getIntExtra("minute", 0);
+
+                    TextView DateAndTime = (TextView)findViewById(R.id.dateTitle);
+                    DateAndTime.setText(String.valueOf(year)+"/"+String.valueOf(month)+"/"+String.valueOf(day)+" "+
+                            String.valueOf(hour)+":"+String.valueOf(minute));
+                }
+
             }
         }
     }
@@ -77,7 +100,17 @@ public class ThingsToDo extends AppCompatActivity {
         title = titleText.getText().toString();
         content = contentText.getText().toString();
 
-        appServer.sendMarker(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude);
+        if(year!=0){
+            appServer.sendMarker(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude);
+        }else{
+            appServer.sendMarker(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude);
+        }
         finish();
+    }
+
+    // Date and Time
+    public void timePicker(View view){
+        Intent timeIntent = new Intent(this, DateTime.class);
+        startActivityForResult(timeIntent, 0);
     }
 }

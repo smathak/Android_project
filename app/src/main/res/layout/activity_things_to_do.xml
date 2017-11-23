@@ -85,7 +85,25 @@
             android:layout_alignStart="@+id/contentText"
             android:layout_below="@+id/chooseMyFriend"
             android:layout_marginTop="12dp"
-            android:text="TextView" />
+            android:text="Your friend" />
+
+        <Button
+            android:id="@+id/DateAndTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignEnd="@+id/addButton"
+            android:layout_alignStart="@+id/sendToMyFriend"
+            android:layout_alignTop="@+id/friendName"
+            android:onClick="timePicker"
+            android:text="Date And Time" />
+
+        <TextView
+            android:id="@+id/dateTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/DateAndTime"
+            android:layout_alignStart="@+id/friendName"
+            android:text="Date and Time" />
 
     </RelativeLayout>
 

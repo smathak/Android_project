@@ -7,28 +7,27 @@
     tools:context="com.example.jieun.project2.FriendPopup">
 
     <RelativeLayout
-        android:layout_width="300dp"
+        android:layout_width="299dp"
         android:layout_height="293dp"
         android:background="@drawable/popup"
         tools:layout_editor_absoluteX="42dp"
         tools:layout_editor_absoluteY="109dp">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/friendName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="78dp"
+            android:layout_marginTop="101dp"
             android:text="TextView" />
 
         <Button
             android:id="@+id/accept"
             android:layout_width="60dp"
             android:layout_height="40dp"
-            android:layout_alignStart="@+id/textView"
-            android:layout_below="@+id/textView"
-            android:layout_marginTop="19dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
             android:onClick="pressAccept"
             android:text="Yes" />
 
@@ -39,9 +38,8 @@
             android:layout_alignStart="@+id/accept"
             android:layout_below="@+id/accept"
             android:onClick="pressReject"
-            android:text="No"
-            tools:layout_editor_absoluteX="162dp"
-            tools:layout_editor_absoluteY="279dp" />
+            android:text="No" />
+
 
     </RelativeLayout>
 
