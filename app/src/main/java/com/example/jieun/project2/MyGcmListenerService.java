@@ -33,12 +33,6 @@ public class MyGcmListenerService extends GcmListenerService {
     public MyGcmListenerService() {
     }
 
-//    @Override
-//    public IBinder onBind(Intent intent) {
-//        // TODO: Return the communication channel to the service.
-//        throw new UnsupportedOperationException("Not yet implemented");
-//    }
-
     @Override
     public void onMessageReceived(String from, Bundle data) {
         // DB
@@ -58,13 +52,13 @@ public class MyGcmListenerService extends GcmListenerService {
         String lat = data.getString("latitude");
         String lng = data.getString("longitude");
 
-        if(category != null && category.equals("marker")){
-            Log.i("notice", "title: "+title);
-            Log.i("notice", "content: "+content);
-            Log.i("notice", "sender_name: "+sender_name);
-            Log.i("notice", "latitude: "+lat);
-            Log.i("notice", "longitude: "+lng);
+        String year = data.getString("year");
+        String month = data.getString("month");
+        String day = data.getString("day");
+        String hour = data.getString("hour");
+        String minute = data.getString("minute");
 
+        if(category != null && category.equals("marker")){
             Double latitude = Double.parseDouble(lat);
             Double longitude = Double.parseDouble(lng);
 
@@ -80,6 +74,9 @@ public class MyGcmListenerService extends GcmListenerService {
                 values.put("latitude", latitude); values.put("longitude", longitude);
                 values.put("featureName", featureName);
                 values.put("sender_name", sender_name);
+                values.put("year", Integer.parseInt(year));     values.put("month", Integer.parseInt(month));
+                values.put("day", Integer.parseInt(day));     values.put("hour", Integer.parseInt(hour));
+                values.put("minute", Integer.parseInt(minute));
                 mDB.insert("things_table", null, values);
 
                 // Notification을 주고 redraw_map을 한다.
@@ -90,6 +87,9 @@ public class MyGcmListenerService extends GcmListenerService {
                 markerIntent.putExtra("longitude", longitude);
                 markerIntent.putExtra("featureName", featureName);
                 markerIntent.putExtra("sender_name", sender_name);
+                if(Integer.parseInt(year) != 0){
+                    markerIntent.putExtra("dateAndTime", year+"/"+month+"/"+day+" "+hour+":"+minute);
+                }
                 markerIntent.setAction("my.broadcast.markerListener");
                 sendBroadcast(markerIntent);
 

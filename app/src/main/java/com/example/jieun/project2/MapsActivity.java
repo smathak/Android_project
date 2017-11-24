@@ -219,7 +219,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 String sender_name = intent.getStringExtra("sender_name");
                 Double lat = intent.getDoubleExtra("latitude", 0.0);
                 Double lng = intent.getDoubleExtra("longitude", 0.0);
-                String message = "Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nFrom: "+sender_name;
+                String dateAndTime = intent.getStringExtra("dateAndTime");
+                String message;
+                if(dateAndTime!=null){
+                    message = "Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nAt: "+dateAndTime+"\nFrom: "+sender_name;
+                }else{
+                    message = "Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nFrom: "+sender_name;
+                }
                 myService.sendNotification(message);
                 redraw_map("gcm");
             }

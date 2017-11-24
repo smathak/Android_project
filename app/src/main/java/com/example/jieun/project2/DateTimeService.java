@@ -31,8 +31,6 @@ public class DateTimeService extends IntentService {
         FeedReaderDbHelper mDbHelper = new FeedReaderDbHelper(mContext);
         mDB = mDbHelper.getWritableDatabase();
         mDbHelper.onCreate(mDB);
-        mCursor = mDB.query("things_table", new String[] {"title", "content", "featureName", "year", "month", "day", "hour", "minute"},
-                null, null, null, null, "_id");
 
         handler.postDelayed(new Runnable() {
             // 60초에 한번씩
@@ -44,6 +42,8 @@ public class DateTimeService extends IntentService {
                 int minute = calendar.get(Calendar.MINUTE);
                 int second = calendar.get(Calendar.SECOND);
                 Log.i("notice", "DateTimeService: "+year+"/"+month+"/"+day+" "+hour+":"+minute+":"+second);
+                mCursor = mDB.query("things_table", new String[] {"title", "content", "featureName", "year", "month", "day", "hour", "minute"},
+                        null, null, null, null, "_id");
                 int i = 0;
                 if(mCursor!=null){
                     if(mCursor.moveToFirst()){
@@ -71,8 +71,8 @@ public class DateTimeService extends IntentService {
                         }while(mCursor.moveToNext());
                     }
                 }
-                handler.postDelayed(this, 5000);
+                handler.postDelayed(this, 20000);
             }
-        }, 5000);
+        }, 20000);
     }
 }

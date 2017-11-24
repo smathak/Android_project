@@ -99,12 +99,12 @@ public class ThingsToDo extends AppCompatActivity {
         EditText contentText = (EditText)findViewById(R.id.contentText);
         title = titleText.getText().toString();
         content = contentText.getText().toString();
+        // 만약 날짜를 따로 입력안하면 0, 0, 0, 0, 0 이 넘어간다.
+        appServer.sendMarkerWithTime(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude
+                                        ,year, month, day, hour, minute);
+        // Renew
+        year = 0; month = 0; day = 0; hour = 0; minute = 0;
 
-        if(year!=0){
-            appServer.sendMarker(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude);
-        }else{
-            appServer.sendMarker(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude);
-        }
         finish();
     }
 

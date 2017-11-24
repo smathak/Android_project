@@ -173,8 +173,10 @@ public class AppServer {
         }.execute();
     }
 
-    public void sendMarker(final String myname, final String friendName, final String friendToken,
-                           final String title, final String content, final Double lat, final Double lng){
+
+    public void sendMarkerWithTime(final String myname, final String friendName, final String friendToken,
+                           final String title, final String content, final Double lat, final Double lng,
+                                  final int year, final int month, final int day, final int hour, final int minute){
         new AsyncTask<Void, Void, Void>() {
 
             @Override
@@ -202,6 +204,11 @@ public class AppServer {
                         message.put("latitude", String.valueOf(lat));
                         message.put("longitude", String.valueOf(lng));
                         message.put("category", "marker");
+                        message.put("year", String.valueOf(year));
+                        message.put("month", String.valueOf(month));
+                        message.put("day", String.valueOf(day));
+                        message.put("hour", String.valueOf(hour));
+                        message.put("minute", String.valueOf(minute));
                         down.put("data", message);
 
                     } catch (JSONException e) {
