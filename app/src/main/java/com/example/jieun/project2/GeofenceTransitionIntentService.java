@@ -26,44 +26,6 @@ import java.util.List;
  * helper methods.
  */
 public class GeofenceTransitionIntentService extends IntentService {
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.example.jieun.project2.action.FOO";
-    private static final String ACTION_BAZ = "com.example.jieun.project2.action.BAZ";
-
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.example.jieun.project2.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.example.jieun.project2.extra.PARAM2";
-
-    /**
-     * Starts this service to perform action Foo with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, GeofenceTransitionIntentService.class);
-        intent.setAction(ACTION_FOO);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
-
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, GeofenceTransitionIntentService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
 
     public GeofenceTransitionIntentService() {
         super("GeofenceTransitionIntentService");
@@ -101,30 +63,7 @@ public class GeofenceTransitionIntentService extends IntentService {
                 broadIntent.setAction("my.broadcast.proximity");
                 broadIntent.putExtra("text", text);
                 sendBroadcast(broadIntent);
-
-//                sendNotification(text);
             }
         }
     }
-
-//    public void sendNotification(String text){
-//
-//        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-//
-//        Intent notificationIntent = new Intent(this, Popup.class);
-//        notificationIntent.putExtra("text", text);
-//        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-//                .setContentTitle("MjRemider: You have things to do here")
-//                .setContentText(text)
-//                .setSmallIcon(R.mipmap.icon)
-//                .setContentIntent(pendingIntent)
-//                .setAutoCancel(true)
-//                .setWhen(System.currentTimeMillis())
-//                .setPriority(NotificationCompat.PRIORITY_MAX);
-//
-//        notificationManager.notify(1234, builder.build());
-//    }
 }

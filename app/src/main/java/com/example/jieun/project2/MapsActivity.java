@@ -305,9 +305,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return mMap;
     }
 
+    int year;
+    String sender_name;
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
 
         // Add a marker in Sydney and move the camera
         LatLng latLng = new LatLng(37.222434, 127.186257);
@@ -316,31 +320,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
         // mDB query
-        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName", "sender_name"},
+        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName", "sender_name",
+                "year", "month", "day", "hour", "minute"},
                 null, null, null, null, "_id");
         int i = 0;
         if(mCursor!=null) {
             if (mCursor.moveToPosition(0)) {
                 do {
                     Double lat, lng;
-                    String title, content, featureName, sender_name;
-                    int year, month, day, hour, minute;
+                    String title, content, featureName;
+                    int month, day, hour, minute;
                     // title, content, lat, lng
-                    title = mCursor.getString(i++);
-                    content = mCursor.getString(i++);
-                    lat = mCursor.getDouble(i++);
-                    lng = mCursor.getDouble(i++);
+                    title = mCursor.getString(i++); content = mCursor.getString(i++);
+                    lat = mCursor.getDouble(i++); lng = mCursor.getDouble(i++);
                     featureName = mCursor.getString(i++);
-                    sender_name = mCursor.getString(i);
+                    sender_name = mCursor.getString(i++);
+                    year = mCursor.getInt(i++); month = mCursor.getInt(i++); day = mCursor.getInt(i++);
+                    hour = mCursor.getInt(i++); minute = mCursor.getInt(i);
 
-                    sender_name = mCursor.getString(i);
-                    if(sender_name != null){
-                        Log.i("notice", "sender_name is: "+sender_name);
+                    if(year!=0 && sender_name!=null){
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+" from: "+sender_name+" At: "+year+"/"+month+"/"+day
+                            +" "+hour+":"+minute).position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
+                    }else if(year == 0 && sender_name != null){
                         mMap.addMarker(new MarkerOptions().title(title).snippet(content+" from: "+sender_name)
                                 .position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
+                    }else if(year!=0 && sender_name == null){
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+" At: "+year+"/"+month+"/"+day
+                                +" "+hour+":"+minute).position(new LatLng(lat, lng)));
                     }else{
-                        mMap.addMarker(new MarkerOptions().title(title).snippet(content)
-                                .position(new LatLng(lat, lng)));
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(new LatLng(lat, lng)));
                     }
                     i = 0;
                 } while (mCursor.moveToNext());
@@ -361,8 +369,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onInfoWindowLongClick(Marker marker){
                 String split[] = marker.getSnippet().toString().split("from");
-                String snippet = split[0];
-                edit_delete_func(marker, marker.getTitle(), snippet, marker.getPosition());
+                int length = split.length;
+                if(length == 2){    // from 이 있는 경우
+                    String snippet = split[0];  // from 앞부분만 보여주면 됨
+                    edit_delete_func(marker, marker.getTitle(), snippet, marker.getPosition());
+                }else if(length == 1){  // from이 없는 경우
+                    String split2[] = marker.getSnippet().toString().split("At");   // At 으로 나눔
+                    int length2 = split2.length;
+                    if(length2 == 2){   // At 이 있다면
+                        String snippet2 = split2[0]; // At 앞부분만 보여줌
+                        edit_delete_func(marker, marker.getTitle(), snippet2, marker.getPosition());
+                    }else{ // from 도 없고 At도 없다면
+                        edit_delete_func(marker, marker.getTitle(), marker.getSnippet(), marker.getPosition());
+                    }
+
+                }
+
+
             }
         });
 
@@ -496,7 +519,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         removeGeofences(); // 1. clear
 
         // redraw
-        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName", "sender_name"},
+        mCursor = mDB.query("things_table", new String[]{"title", "content", "latitude", "longitude", "featureName", "sender_name",
+                        "year", "month", "day", "hour", "minute"},
                 null, null, null, null, "_id");
         int i = 0;
         if(mCursor!=null)
@@ -511,21 +535,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     lat = mCursor.getDouble(i++);
                     lng = mCursor.getDouble(i++);
                     featureName = mCursor.getString(i++);
-                    sender_name = mCursor.getString(i);
-                    if(sender_name != null){
-                        Log.i("notice", "sender_name is: "+sender_name);
-                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+"from: "+sender_name)
-                                .position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
-                        // renew Constants
-                        Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nFrom: "+sender_name, new LatLng(lat, lng));
-                    }else{
+                    sender_name = mCursor.getString(i++);
+                    year = mCursor.getInt(i++); month = mCursor.getInt(i++); day = mCursor.getInt(i++);
+                    hour = mCursor.getInt(i++); minute = mCursor.getInt(i);
 
-                        mMap.addMarker(new MarkerOptions().title(title).snippet(content)
-                                .position(new LatLng(lat, lng)));
-                        // renew Constants
+                    if(year!=0 && sender_name!=null){
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+" from: "+sender_name+"\nAt: "+year+"/"+month+"/"+day
+                                +" "+hour+":"+minute).position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
+                        Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nFrom: "+sender_name+
+                                " At: "+year+"/"+month+"/"+day+" "+hour+":"+minute, new LatLng(lat, lng));
+
+                    }else if(year == 0 && sender_name != null){
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+" from: "+sender_name)
+                                .position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
+                        Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nFrom: "+sender_name, new LatLng(lat, lng));
+
+                    }else if(year!=0 && sender_name == null){
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content+" At: "+year+"/"+month+"/"+day
+                                +" "+hour+":"+minute).position(new LatLng(lat, lng)));
+                        Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+
+                                "\nAt: "+year+"/"+month+"/"+day +" "+hour+":"+minute, new LatLng(lat, lng));
+                    }else{
+                        mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(new LatLng(lat, lng)));
                         Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
                     }
-
                     i = 0;
                 } while (mCursor.moveToNext());
             }
