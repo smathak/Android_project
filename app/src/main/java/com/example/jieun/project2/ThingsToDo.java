@@ -2,7 +2,7 @@ package com.example.jieun.project2;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.provider.ContactsContract;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,7 +12,16 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import org.w3c.dom.Text;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class ThingsToDo extends AppCompatActivity {
     String title;

@@ -312,7 +312,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-
         // Add a marker in Sydney and move the camera
         LatLng latLng = new LatLng(37.222434, 127.186257);
         mMap.addMarker(new MarkerOptions().position(latLng).title("Myoungji University"));
@@ -382,10 +381,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }else{ // from 도 없고 At도 없다면
                         edit_delete_func(marker, marker.getTitle(), marker.getSnippet(), marker.getPosition());
                     }
-
                 }
-
-
             }
         });
 
@@ -394,7 +390,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }catch(SecurityException e){
             e.printStackTrace();
         }
-
     }
 
     public void edit_delete_func(Marker marker, String title, String content, LatLng position){

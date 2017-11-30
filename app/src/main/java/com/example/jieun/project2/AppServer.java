@@ -1,11 +1,12 @@
-﻿package com.example.jieun.project2;
+package com.example.jieun.project2;
+
+/**
+ * Created by jieun on 11/27/2017.
+ */
 
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.google.android.gms.gcm.GcmPubSub;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -14,15 +15,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 
 import javax.net.ssl.HttpsURLConnection;
 
 /**
- * Created by jieun on 11/19/2017.
+ * Created by jieun on 11/27/2017.
  */
-
-
 
 public class AppServer {
 
@@ -32,8 +30,8 @@ public class AppServer {
     JSONObject down = new JSONObject();
     public static String token;
     // GCM Server HTTP 방식
-//        https://android.googleapis.com/gcm/notification
-//        https://gcm-http.googleapis.com/gcm/send
+    //        https://android.googleapis.com/gcm/notification
+    //        https://gcm-http.googleapis.com/gcm/send
 
     public AppServer(){}
 
@@ -55,7 +53,7 @@ public class AppServer {
             protected Void doInBackground(Void... voids) {
                 try {
                     URL url_down = new URL(" https://gcm-http.googleapis.com/gcm/send");
-//                    URL url_noti = new URL("https://gcm-http.googleapis.com/gcm/notification");
+                    //                    URL url_noti = new URL("https://gcm-http.googleapis.com/gcm/notification");
                     HttpsURLConnection http = (HttpsURLConnection)url_down.openConnection();
                     http.setRequestProperty("Content-Type", "application/json");
                     http.setRequestProperty("Authorization", "key="+server_key);
@@ -68,9 +66,9 @@ public class AppServer {
 
                     OutputStream output = http.getOutputStream();
                     try {
-//                        jsonObject.accumulate("operation", "create");
-//                        jsonObject.accumulate("notification_key_name", "appUser-jieun");
-//                        jsonObject.accumulate("registrations_ids", registration_ids);
+                        //                        jsonObject.accumulate("operation", "create");
+                        //                        jsonObject.accumulate("notification_key_name", "appUser-jieun");
+                        //                        jsonObject.accumulate("registrations_ids", registration_ids);
 
                         down.accumulate("to", friendToken);  // 친구 토큰을 이용하여 친구에게 보냄
                         JSONObject message = new JSONObject();
@@ -175,8 +173,8 @@ public class AppServer {
 
 
     public void sendMarkerWithTime(final String myname, final String friendName, final String friendToken,
-                           final String title, final String content, final Double lat, final Double lng,
-                                  final int year, final int month, final int day, final int hour, final int minute){
+                                   final String title, final String content, final Double lat, final Double lng,
+                                   final int year, final int month, final int day, final int hour, final int minute){
         new AsyncTask<Void, Void, Void>() {
 
             @Override
@@ -200,7 +198,7 @@ public class AppServer {
                         message.put("sender_name", myname); // 보낸 사람 이름
                         message.put("title", title);
                         message.put("content", content);
-                        Log.i("notice", "AppServer: "+lat);
+                        Log.i("notice", "com.example.jieun.project2.ThingsToDo.AppServer: "+lat);
                         message.put("latitude", String.valueOf(lat));
                         message.put("longitude", String.valueOf(lng));
                         message.put("category", "marker");
@@ -245,13 +243,3 @@ public class AppServer {
         }.execute();
     }
 }
-
-
-
-
-//            String json = "{\"operation\": "+"\"create\""+ ","+
-//                    "\"notification_key_name\": "+"\"appUser-jieun\""+","+
-//                    "\"registration_ids\": "+"[\""+token+"\"]}";
-
-//            String json = "{\"to\": "+"\""+token+"\""+","+
-//                    "\"data\": {\"message\": \"test http json request\"}}";
