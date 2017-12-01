@@ -1,9 +1,4 @@
 package com.example.jieun.project2;
-
-/**
- * Created by jieun on 11/27/2017.
- */
-
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -20,6 +15,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Created by jieun on 11/27/2017.
+ * GCM을 하기 위하여 https://gcm-http.googleapis.com/gcm/send 와 http 통신을 하는 클래스이다.
  */
 
 public class AppServer {
@@ -45,6 +41,7 @@ public class AppServer {
         return this.token;
     }
 
+    // 친구에게 Message를 보내주는 함수(AsyncTask로 선언하였다.)
     public void sendAcceptMessage(final String myname, final String friendToken){
 
         new AsyncTask<Void, Void, Void>() {
@@ -112,6 +109,7 @@ public class AppServer {
 
     }
 
+    // 친구를 등록할 때 사용하는 함수
     public void registerFriend(final String message){
         new AsyncTask<Void, Void, Void>() {
 
@@ -172,6 +170,7 @@ public class AppServer {
     }
 
 
+    // 친구에게 메세지를 보내되 시간도 함께 보낼 때 사용하는 함수
     public void sendMarkerWithTime(final String myname, final String friendName, final String friendToken,
                                    final String title, final String content, final Double lat, final Double lng,
                                    final int year, final int month, final int day, final int hour, final int minute){
