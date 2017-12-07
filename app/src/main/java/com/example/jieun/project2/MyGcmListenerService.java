@@ -33,6 +33,7 @@ public class MyGcmListenerService extends GcmListenerService {
     public MyGcmListenerService() {
     }
 
+    // 친구 신청, 수락, 메세지를 주고받을 때마다 호출되는 함수
     @Override
     public void onMessageReceived(String from, Bundle data) {
         // DB
@@ -41,10 +42,12 @@ public class MyGcmListenerService extends GcmListenerService {
         mDbHelper.onCreate(mDB);
         geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());       // Geocode
 
+        // 친구 등록
         String friendName = data.getString("name");     // 친구의 이름을 받음
         String friendToken = data.getString("token");     // 친구로부터 친구의 토큰을 받음(친구에게 메시지를 보내기 위해 저장해야 함)
         String message = data.getString("message");     // 나에게 온 수락 메세지일 경우 ("accepted your request") 라는 메세지가 온다.
 
+        // 친구로부터 온 메세지
         String sender_name = data.getString("sender_name");
         String title = data.getString("title");
         String content = data.getString("content");
@@ -52,6 +55,7 @@ public class MyGcmListenerService extends GcmListenerService {
         String lat = data.getString("latitude");
         String lng = data.getString("longitude");
 
+        // 친구로 부터 온 메세지에 포함된 날짜
         String year = data.getString("year");
         String month = data.getString("month");
         String day = data.getString("day");

@@ -16,6 +16,7 @@ import com.google.android.gms.gcm.GcmPubSub;
 
 import java.io.IOException;
 
+// 친구 신청, 수락을 할 때 팝업창을 띄우는 클래스이다.
 public class FriendPopup extends AppCompatActivity {
 
     String friendName;
@@ -25,7 +26,6 @@ public class FriendPopup extends AppCompatActivity {
     // DB
     private SQLiteDatabase mDB;
     Cursor mCursor;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +58,7 @@ public class FriendPopup extends AppCompatActivity {
         titleText.setText(friendName+" want to be your friend");
     }
 
+    // 수락 버튼을 누른 경우 호출되는 함수. 수락버튼을 누르면 친구 이름, 토큰 정보가 DB에 저장된다.
     public void pressAccept(View view){
         // 친구를 myname_table에 저장
         ContentValues values = new ContentValues();

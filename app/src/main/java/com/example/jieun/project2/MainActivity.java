@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     private SQLiteDatabase mDB;
     Cursor mCursor;
 
-    // GPS
+    // Location and GPS
     private GoogleApiClient googleApiClient;
     private LocationManager locationManager;
     private Location lastLocation;
@@ -85,14 +85,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
         handler = new Handler();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);     // GPS 활성화 여부 확인
         geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        // For location tracking using GPS, GoogleAPIClient is necessary
+        // GPS 를 사용하여 위치 추적과 Geofence를 하기 위해서는 Google API Client 가 필요하다.
         if(googleApiClient==null){
             googleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API).build();
         }
         googleApiClient.connect();
 
+        // 이동하는 위치를 계속 위한 변수들
         locationRequest =  new LocationRequest();
         locationRequest.setInterval(20000);
         locationRequest.setFastestInterval(10000);
@@ -100,12 +101,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
     }
 
-    public void startPress(View view){  // This is needed to get start location
-        if (isGPSEnabled == true)  {
-            Toast.makeText(this, "GPS is turned on", Toast.LENGTH_LONG);
-        }else{
-            // turn on GPS automatically
-        }
+    public void startPress(View view){
 
         try{
             lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
@@ -119,15 +115,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         }catch(SecurityException e){
             e.printStackTrace();
         }
-        // GCM
+        // GCM - GCM으로 HTTP 통신을 하기 위해서는 토큰이 필요하므로 RegistrationService를 부른다.
         Intent regisIntent = new Intent(this, RegistrationService.class);
         startService(regisIntent);
 
-        // Show google map
+        // 지도로 간다
         Intent ToTheMapIntent = new Intent(this, MapsActivity.class);
         startActivity(ToTheMapIntent);
     }
 
+    // 위치가 이동할 때마다 호출되어 현재 위치를 계속 갱신
     @Override
     public void onLocationChanged(Location location) {
         Double lat = location.getLatitude();
@@ -143,20 +140,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         }
     }
 
-//    public void onDestroy(){
-//        super.onDestroy();
-//        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, (LocationListener) this);
-//        if(googleApiClient != null){
-//            googleApiClient.disconnect();
-//        }
-//        Log.i("notice", "onDestroy");
-//    }
-
+    // ID 생성하기 위해 Id intent로 이동
      public void createName(View view){
          Intent idIntent = new Intent(this, IdIntent.class);
          startActivityForResult(idIntent, 0);
      }
 
+     // 사용자가 입력한 ID를 얻어 DB에 저장
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == 0) {
@@ -169,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         }
     }
 
+    // ID로 접속한 경우 호출되는 함수 - 해당 ID 가 있는 지 체크한 후 있으면 지도 시작, 없으면 경고문을 띄운다.
     public void startWithID(View view){
 
         EditText nameText = (EditText)findViewById(R.id.nameText) ;

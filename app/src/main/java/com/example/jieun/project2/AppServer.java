@@ -20,8 +20,8 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class AppServer {
 
-    String server_key = ""; // Server key(For app Server in Firebase)
-    String sender_id = "";
+    String server_key = "AAAAgkUXc-0:APA91bHpxOFapwTWJATAGNYLlQ0HcXW3k4RrsfekWb-VMx-LYrjBSJM2UMWTegoSfPbollQY0svzv7MioTp-JpA5niHD2YhpM19PvwU14_fu4EUyU1yNw6WuLa5PiWdhikKXNvzCND-n"; // Server key(For app Server in Firebase)
+    String sender_id = "559504913389";
     JSONObject jsonObject = new JSONObject();
     JSONObject down = new JSONObject();
     public static String token;
@@ -41,7 +41,6 @@ public class AppServer {
         return this.token;
     }
 
-    // 친구에게 Message를 보내주는 함수(AsyncTask로 선언하였다.)
     public void sendAcceptMessage(final String myname, final String friendToken){
 
         new AsyncTask<Void, Void, Void>() {
@@ -109,7 +108,6 @@ public class AppServer {
 
     }
 
-    // 친구를 등록할 때 사용하는 함수
     public void registerFriend(final String message){
         new AsyncTask<Void, Void, Void>() {
 
@@ -170,7 +168,6 @@ public class AppServer {
     }
 
 
-    // 친구에게 메세지를 보내되 시간도 함께 보낼 때 사용하는 함수
     public void sendMarkerWithTime(final String myname, final String friendName, final String friendToken,
                                    final String title, final String content, final Double lat, final Double lng,
                                    final int year, final int month, final int day, final int hour, final int minute){

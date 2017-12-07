@@ -72,8 +72,4 @@ public class RegistrationService extends IntentService {
         }.execute();
 //       Once you've received your registration token, make sure to send it to your server.
     }
-
-    public void subscribeTopics(String friend) throws IOException {
-        pubSub.subscribe(token, "/topics/" + friend, null);
-    }
 }

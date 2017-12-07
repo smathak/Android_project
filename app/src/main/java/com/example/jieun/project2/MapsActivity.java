@@ -66,9 +66,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+// 맵, 위치와 관련된 모든 함수들은 다 MapsActivity 클래스에 있다.
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener,
         LocationListener, ResultCallback<Status>, OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks {
 
+    // 위치를 옮길 때마다 호출되는 call back 함수
     @Override
     public void onLocationChanged(Location location) {
 //        Log.i("notice", "onLocationChanged: "+location.getLatitude()+", "+location.getLongitude());
@@ -125,6 +127,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     String friend;
     AppServer appServer;
 
+    // MapsActivity를 생성하면서
+    // 이 앱에 필요한 기본적인 환경들을 설정한다.
+    // broadcast 생성, gps 활성화 여부, Geofence, Geocoder, DB 등을 생성하고 초기화 한다.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -170,12 +175,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             googleApiClient.connect();
         }
 
+        // 위치 파악 변수들
         locationRequest =  new LocationRequest();
         locationRequest.setInterval(20000);
         locationRequest.setFastestInterval(10000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 //        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
 
+        //Broadcast 생성 및 등록
         filter = new IntentFilter();
         filter.addAction("my.broadcast.proximity");
 
@@ -202,7 +209,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if(message!=null && message.equals("accepted your request")){
                     myService.sendNotification(friendName+" "+message);     // 수락 메세지 보내기
                 }else{
-                    myService.GcmNotification(friendName, friendToken);
+                    myService.GcmNotification(friendName, friendToken);     // Notification을 뛰우기 위한 함수 호출
                 }
             }
         };
@@ -227,13 +234,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }else{
                     message = "Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName+"\nFrom: "+sender_name;
                 }
-                myService.sendNotification(message);
+                myService.sendNotification(message);    // Notification을 띄우기 위한 함수 호출
                 redraw_map("gcm");
             }
         };
         registerReceiver(markerReceiver, markerFilter);
 
-        geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());       // Geocode
+        // Geocode
+        geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
         Intent serviceIntent = new Intent(getApplicationContext(), MyService.class);
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
@@ -272,26 +280,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void onStart(){
         super.onStart();
-        if (isGPSEnabled == true)  Log.i("notice", "gps turned on");
+        // gps가 켜져 있지 않다면 gps를 키라는 toast를 띄운다.
+        if (isGPSEnabled == false){
+            Toast.makeText(getApplicationContext(), "You have to turn on GPS", Toast.LENGTH_LONG).show();
+        }else{
+            Toast.makeText(getApplicationContext(), "GPS turned on", Toast.LENGTH_LONG).show();
+        }
     }
-
-    //    public void onStop(){
-//        super.onStop();
-//        if(mBound){
-//            unbindService(serviceConnection);
-//            mBound = false;
-//        }
-//        Log.i("notice", "onStop");
-//    }
-
-//    public void onDestroy(){
-//        super.onDestroy();
-//        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
-//        if(googleApiClient != null){
-//            googleApiClient.disconnect();
-//        }
-//        Log.i("notice", "onDestroy");
-//    }
 
     /**
      * Manipulates the map once available.
@@ -309,11 +304,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     int year;
     String sender_name;
 
+    // Google map과 관련된 모든 기능들은 이곳에 있다.
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
         LatLng latLng = new LatLng(37.222434, 127.186257);
         mMap.addMarker(new MarkerOptions().position(latLng).title("Myoungji University"));
         float zoomLevel = 16.0f; //This goes up to 21
@@ -324,6 +319,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 "year", "month", "day", "hour", "minute"},
                 null, null, null, null, "_id");
         int i = 0;
+
+        // 앱이 시작될때마다 Marker가 전부 초기화 되버리므로 앱을 켤때마다 DB에서 저장된 위치정보를 이용하여 Redraw 한다.
         if(mCursor!=null) {
             if (mCursor.moveToPosition(0)) {
                 do {
@@ -355,6 +352,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
+        // 지도를 오래 클릭한 경우
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener(){
             @Override
             public void onMapLongClick(LatLng position){
@@ -365,6 +363,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         mMap.setOnMarkerClickListener(this);
+        // snippet을 오래 클릭한 경우
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener(){
             @Override
             public void onInfoWindowLongClick(Marker marker){
@@ -393,6 +392,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    // Marker의 생성
+    public void add(double latitude, double longitude){
+        Intent intent = new Intent(this, ThingsToDo.class);
+        Double lat = latitude;
+        Double lng = longitude;
+        intent.putExtra("latitude", lat);
+        intent.putExtra("longitude", lng);
+        startActivityForResult(intent, 0);
+    }
+
+
+    // Marker의 수정과 삭제 호출
     public void edit_delete_func(Marker marker, String title, String content, LatLng position){
         renewed = marker; // get the marker to change
         Intent intent = new Intent(this, edit_delete.class);
@@ -414,7 +425,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         intent.putExtra("longitude", position.longitude);
         startActivityForResult(intent, 0);
     }
-    /* Called when the user clicks a marker. */
+
     @Override
     public boolean onMarkerClick(final Marker marker) {
         // Retrieve the data from the marker.
@@ -426,15 +437,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return false;
     }
 
-    public void add(double latitude, double longitude){
-        Intent intent = new Intent(this, ThingsToDo.class);
-        Double lat = latitude;
-        Double lng = longitude;
-        intent.putExtra("latitude", lat);
-        intent.putExtra("longitude", lng);
-        startActivityForResult(intent, 0);
-    }
-
+    // Marker를 생성, 수정, 삭제하기 위해 result를 해당 intent 에서 받아온 후, DB에 저장한다.
     public void onActivityResult(int requestCode, int resultCode, Intent intent){
         super.onActivityResult(requestCode, resultCode, intent);
         if(requestCode == 0){
@@ -481,14 +484,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 if(mode!=null){
-                    // Save it to SQLite
+                    // 저장
                     if(mode.equals("insert")){
                         mDB.insert("things_table", null, values);
                         renewed = mMap.addMarker(new MarkerOptions().title(title).snippet(content).position(position));
                         redraw_map("insert");
                     }
 
-                    // Update marker
+                    // 수정
                     if(mode.equals("update")) {
                         String _id = intent.getStringExtra("_id");
                         mDB.update("things_table", values, "_id=" + _id, null);
@@ -496,7 +499,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         redraw_map("update");
                     }
 
-                    // Delete marker
+                    // 삭제
                     if(mode.equals("delete")){
                         String _id = intent.getStringExtra("_id");
                         mDB.delete("things_table", "_id="+_id, null);
@@ -507,6 +510,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    // 맵에 Marker를 생성, 수정, 삭제 할 때마다 바로 지도 위에 반영하기 위하여 redraw_map이 호출된다.
     public void redraw_map(String mode){
         mMap.clear(); // clear map first
         Constants.POPUP_MESSAGE.clear(); // insert, update, delete 를 눌러도 모두 clear 해야 한다.
@@ -562,12 +566,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(mode.equals("delete")){
             // do nothing
         }else{
-            // 2. renew all the other geofences
+            // 2. Geofence를 갱신한다.
             geofenceUpdate();
         }
-
-
     }
+
 
     public boolean onCreateOptionsMenu(Menu menu){
         MenuInflater menuInflater = getMenuInflater();
@@ -603,6 +606,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onResult(@NonNull Status status) {}
 
+    // Geofence 를 사용하기 위해서는 Google API Client와의 연결이 필요하다.
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.i("notice", "googleApiClient connected");
@@ -640,10 +644,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 } while (mCursor.moveToNext());
             }
         }
-
         geofenceUpdate();
     }
 
+    // Geofence 삭제
     public void removeGeofences(){
         try{
             Intent intent = new Intent(this, GeofenceTransitionIntentService.class);
@@ -654,6 +658,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    // Marker가 생성, 삭제 될 때마다 Geofence의 list도 갱신됨
     public void geofenceUpdate(){
         for(Map.Entry<String, LatLng> entry : Constants.POPUP_MESSAGE.entrySet()) {
             geofenceList.add(new Geofence.Builder()

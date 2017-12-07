@@ -24,6 +24,7 @@ public class DateTime extends AppCompatActivity {
         timePicker = (TimePicker)findViewById(R.id.timePicker);
     }
 
+    // ADD 버튼을 누르면 연, 월, 일, 시, 분 정보를 모두 가져와 ThingsToDo 액티비티로 반환한다.
     public void addPress(View view){
         year = datePicker.getYear();
         month = datePicker.getMonth();
