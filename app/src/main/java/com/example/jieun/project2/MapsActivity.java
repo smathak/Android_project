@@ -335,6 +335,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     year = mCursor.getInt(i++); month = mCursor.getInt(i++); day = mCursor.getInt(i++);
                     hour = mCursor.getInt(i++); minute = mCursor.getInt(i);
 
+                    // Marker 그리기
                     if(year!=0 && sender_name!=null){
                         mMap.addMarker(new MarkerOptions().title(title).snippet(content+" from: "+sender_name+" At: "+year+"/"+month+"/"+day
                             +" "+hour+":"+minute).position(new LatLng(lat, lng)).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher_round)));
@@ -461,7 +462,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 int minute = intent.getIntExtra("minute", 0);
                 Log.i("notice", "MapActivity: "+year);
 
-                if(friend!=null) {  // friend의 이름을 App server 에서 client app 으로 보낸다
+                if(friend!=null) {  // friend의 이름을 App server(내 폰)로 보내서 client app(친구 폰) 으로 보낸다
                     appServer.registerFriend(friend);
                 }
 
@@ -580,11 +581,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
-            case R.id.item:
+            case R.id.item: // 게시판을 보여주는 버튼
                 Intent intent = new Intent(this, NoticeBoard.class);
                 startActivity(intent);
                 return true;
             case R.id.request:
+                // refresh 버튼(f5 새로고침 버튼과 비슷한 기능)
                 try{
                     if(geofencingRequest != null){
                         LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
@@ -593,6 +595,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     e.printStackTrace();
                 }
                 return true;
+                // 친구 신청 버튼
             case R.id.gcmFriend:
                 Intent friendIntent = new Intent(this, FriendActivity.class);
                 startActivityForResult(friendIntent, 0);
@@ -606,7 +609,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onResult(@NonNull Status status) {}
 
-    // Geofence 를 사용하기 위해서는 Google API Client와의 연결이 필요하다.
+    // GPS로 위치를 얻기 위해서는 Google API Client와의 연결이 필요하다.
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.i("notice", "googleApiClient connected");
@@ -639,12 +642,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     lat = mCursor.getDouble(i++);
                     lng = mCursor.getDouble(i++);
                     featureName = mCursor.getString(i++);
+                    // Geofence list를 갱신하고
                     Constants.POPUP_MESSAGE.put("Title: "+title+"\nThings todo: "+content+"\nAt: "+featureName, new LatLng(lat, lng));
                     i = 0;
                 } while (mCursor.moveToNext());
             }
         }
-        geofenceUpdate();
+        geofenceUpdate(); // 이 함수를 호출
     }
 
     // Geofence 삭제
@@ -676,13 +680,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(geofenceList);
         try{
-            geofencingRequest = builder.build();    // it will cause IllegalArumentException if geofenceList is empty
+            // GeofenceList가 비어있으면 IllegalArgumentExeception을 보내므로 예외처리한다.
+            geofencingRequest = builder.build();
         }catch(IllegalArgumentException e){
             e.printStackTrace();
         }
 
         try{
-            // Start tracking user's current location and compare with marker's position and send broadcast
+            // 이용자의 현재 위치를 추적하고, Marker의 위치와 비교한 후 근접하면 Broadcast를 보낸다.
             if(geofencingRequest != null){
                 LocationServices.GeofencingApi.addGeofences(googleApiClient, geofencingRequest, pendingIntent).setResultCallback(this);
             }

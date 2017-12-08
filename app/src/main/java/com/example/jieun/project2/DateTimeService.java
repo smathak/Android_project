@@ -11,6 +11,8 @@ import android.util.Log;
 
 import java.util.Calendar;
 
+// handler를 이용하여 60초에 한번씩 시간을 DB에 사용자가 저장한 시간과 비교하여, 일치하면 Notification으로 알려주는 클래스
+
 public class DateTimeService extends IntentService {
     // DB
     private SQLiteDatabase mDB;

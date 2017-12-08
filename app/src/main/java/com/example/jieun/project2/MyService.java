@@ -40,7 +40,7 @@ public class MyService extends Service {
         return iBinder;
     }
 
-
+// Marker와 위치가 근접했을 때 Notification을 보내주는 함수
     public void sendNotification(String text){
 
         Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
@@ -69,6 +69,7 @@ public class MyService extends Service {
 
     }
 
+    // 친구 신청, 수락, 메세지와 관련된 모든 Notification
     public void GcmNotification(String friendName, String friendToken){
 
         // Notification

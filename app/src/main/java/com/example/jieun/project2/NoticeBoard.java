@@ -20,6 +20,7 @@ import android.widget.SimpleAdapter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+// 게시판 클래스(ListView로 구성)
 public class NoticeBoard extends Activity {
 
     private Cursor mCursor;

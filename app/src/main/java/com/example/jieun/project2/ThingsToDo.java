@@ -23,6 +23,7 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+// Marker를 생성하거나 친구에게 보낼 때 해야할 일(ThingsToDo) 클래스를 호출한다
 public class ThingsToDo extends AppCompatActivity {
     String title;
     String content;
@@ -69,6 +70,7 @@ public class ThingsToDo extends AppCompatActivity {
         finish();
     }
 
+    // 친구 선택을 눌렀을 때
     public void choosePress(View view){
         Intent sendIntent = new Intent(this, FriendList.class);
         startActivityForResult(sendIntent, 0);
@@ -103,12 +105,14 @@ public class ThingsToDo extends AppCompatActivity {
         }
     }
 
+    // 친구에게 보내기 버튼을 눌렀을 때
     public void sendPress(View view){
         EditText titleText = (EditText)findViewById(R.id.titleText);
         EditText contentText = (EditText)findViewById(R.id.contentText);
         title = titleText.getText().toString();
         content = contentText.getText().toString();
         // 만약 날짜를 따로 입력안하면 0, 0, 0, 0, 0 이 넘어간다.
+        // appServer로 친구 이름, 친구 토큰, 내용, 경도, 위도, 날짜를 보낸다.
         appServer.sendMarkerWithTime(Constants.MY_NAME, friendName, friendToken, title, content, latitude, longitude
                                         ,year, month, day, hour, minute);
         // Renew
@@ -117,7 +121,7 @@ public class ThingsToDo extends AppCompatActivity {
         finish();
     }
 
-    // Date and Time
+    // Date and Time 을 눌렀을 때
     public void timePicker(View view){
         Intent timeIntent = new Intent(this, DateTime.class);
         startActivityForResult(timeIntent, 0);

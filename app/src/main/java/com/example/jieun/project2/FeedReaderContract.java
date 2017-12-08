@@ -12,6 +12,7 @@ public final class FeedReaderContract {
 
 
     public static abstract class FeedEntry implements BaseColumns {
+        // things_table: 제목, 내용, 경도, 위도, 지명, 보낸 사람, 년, 월, 일, 시, 분 column을 가진다.
         public static final String TABLE_NAME = "things_table";
 
         public static final String COLUMN_NAME_TITLE = "title";
@@ -27,6 +28,7 @@ public final class FeedReaderContract {
         public static final String COLUMN_NAME_MINUTE = "minute";
 
 
+        // myname_table은 내 이름, 친구 목록, 친구 토큰 목록을 스키마로 가진다.
         public static final String MYNAME_TABLE = "myname_table";
 
         public static final String COLUMN_NAME_MYNAME = "myname";
@@ -35,6 +37,7 @@ public final class FeedReaderContract {
     }
 
     public static final String DATABASE_NAME = "reminderDB.db";
+
     public static final String SQL_CREATE_TABLE =
             "CREATE TABLE IF NOT EXISTS " + FeedEntry.TABLE_NAME + " ( " +
                     FeedEntry._ID + " INTEGER PRIMARY KEY," +

@@ -15,6 +15,7 @@ import android.widget.SimpleAdapter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+// CHOOSE FRIEND 버튼을 누르면 열리는 친구 목록 리스트를 보여주는 클래스
 public class FriendList extends Activity {
     private Cursor mCursor;
     private SQLiteDatabase mDB;
@@ -30,6 +31,7 @@ public class FriendList extends Activity {
         mDB = mDBHelper.getReadableDatabase();
         mDBHelper.onCreate(mDB);
 
+        // "myname_table 에서 query
         ArrayList<HashMap<String, String>> mList = new ArrayList<HashMap<String, String>>();
         mCursor = mDB.query("myname_table", new String[]{"friendName", "friendToken"},
                 null, null, null, null, null);
@@ -49,6 +51,7 @@ public class FriendList extends Activity {
         ListView listView = (ListView)findViewById(R.id.listView);
         listView.setAdapter(simpleAdapter);
 
+        // 리스트를 클릭하면
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -61,10 +64,12 @@ public class FriendList extends Activity {
                     mCursor.moveToNext();
                     i++;
                 }
+                //해당 친구의 이름과 토큰을 을 MapsActivity로 반환
                 String friendName = mCursor.getString(0);
                 String friendToken = mCursor.getString(1);
                 intent.putExtra("friendName", friendName);
                 intent.putExtra("friendToken", friendToken);
+                //-> MapsActivity에서 ->AppServer로 보낸다
                 setResult(Activity.RESULT_OK, intent);
                 finish();
             }

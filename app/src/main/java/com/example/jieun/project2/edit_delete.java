@@ -36,7 +36,7 @@ public class edit_delete extends AppCompatActivity {
         contentText.setText(content);
     }
 
-
+    // 수정하기 위한 정보를 MapsActivity로 반환
     public void editThing(View view){
         EditText titleText = (EditText)findViewById(R.id.titleText);
         EditText contentText = (EditText)findViewById(R.id.contentText);
@@ -55,6 +55,7 @@ public class edit_delete extends AppCompatActivity {
         finish();
     }
 
+    // 삭제하기 위해 _id를 반환
     public void deleteThing(View view){
         intent.putExtra("mode", "delete");
         intent.putExtra("latitude", latitude);

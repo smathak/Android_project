@@ -22,6 +22,7 @@ import android.widget.TextView;
 import java.security.Key;
 import java.util.zip.Inflater;
 
+// Marker와 근접해졌을 때 띄어지는 팝업창(Broadcast가 부른다)
 public class Popup extends AppCompatActivity {
 
     @Override

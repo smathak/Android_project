@@ -12,6 +12,8 @@ import android.widget.TextView;
 
 import org.w3c.dom.Text;
 
+
+// CREATE ID 버튼을 클릭하면 호출되는 클래스
 public class IdIntent extends AppCompatActivity {
     private SQLiteDatabase mDB;
     Cursor mCursor;
@@ -51,7 +53,7 @@ public class IdIntent extends AppCompatActivity {
         }
 
 
-        if(!flag){
+        if(!flag){  // db에 없는 이름이라면 MainActivity 로 반환한다.
             Intent intent = getIntent();
             flag = false;
             intent.putExtra("nickname", nickname);

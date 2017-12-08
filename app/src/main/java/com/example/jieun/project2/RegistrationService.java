@@ -28,6 +28,7 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
+// GCM을 이용하기 위한 Token을 가져오는 클래스
 public class RegistrationService extends IntentService {
     public RegistrationService() {
         super("RegistrationService");
@@ -40,8 +41,7 @@ public class RegistrationService extends IntentService {
     GcmPubSub pubSub;
     @Override
     public void onHandleIntent(Intent intent) {
-//        providing the app server's sender ID: This is necessary for client app to register with GCM connection server
-//        to receive messages from app server
+
 
         new AsyncTask<Void, Void, Void>() {
 
@@ -70,6 +70,5 @@ public class RegistrationService extends IntentService {
                 return null;
             }
         }.execute();
-//       Once you've received your registration token, make sure to send it to your server.
     }
 }

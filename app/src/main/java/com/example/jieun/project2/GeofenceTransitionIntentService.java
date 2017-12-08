@@ -47,10 +47,11 @@ public class GeofenceTransitionIntentService extends IntentService {
             String IDs = TextUtils.join(", ", triggeringGeofencingIdsList);
 
             int transitiontype = geofencingEvent.getGeofenceTransition();
+            // 지도의 Marker에 저장된 위치 근처로 오면 이 부분이 호출
             if(transitiontype == Geofence.GEOFENCE_TRANSITION_ENTER) {
                 Log.i("notice", text);
 
-                // Invoke popup
+                // Marker 근처로 왔음을 알려주는 팝업창을 띄운다.
                 Intent popupintent = new Intent(this, Popup.class);
                 popupintent.putExtra("text", text);
                 popupintent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -58,7 +59,7 @@ public class GeofenceTransitionIntentService extends IntentService {
                 Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                 v.vibrate(800);
 
-                // Broadcast
+                // Broadcast->Notification
                 Intent broadIntent = new Intent();
                 broadIntent.setAction("my.broadcast.proximity");
                 broadIntent.putExtra("text", text);

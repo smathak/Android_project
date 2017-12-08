@@ -68,7 +68,7 @@ public class FriendPopup extends AppCompatActivity {
 
         // 수락했음을 알려줌. => 나의 이름과 나의 token 과 수락 메세지를 친구의 token으로 보내줌
         AppServer appServer = new AppServer();
-        appServer.sendAcceptMessage(Constants.MY_NAME, friendToken); // MapsActivity 에서 친구 토큰을 받아오기
+        appServer.sendAcceptMessage(Constants.MY_NAME, friendToken); // friendToken: MapsActivity 에서 친구 토큰을 받아오기
         finish();
     }
 

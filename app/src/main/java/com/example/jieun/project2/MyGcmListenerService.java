@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-// Client
+// Client: 친구의 App server 로 부터 온 메시지를 받는 Service
 public class MyGcmListenerService extends GcmListenerService {
     // DB
     private SQLiteDatabase mDB;

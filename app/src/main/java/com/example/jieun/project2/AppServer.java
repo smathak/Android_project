@@ -13,11 +13,15 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+//        providing the app server's sender ID: This is necessary for client app to register with GCM connection server
+//       to receive messages from app server
+
 /**
  * Created by jieun on 11/27/2017.
- * GCM을 하기 위하여 https://gcm-http.googleapis.com/gcm/send 와 http 통신을 하는 클래스이다.
+ *
  */
 
+// GCM을 하기 위하여 https://gcm-http.googleapis.com/gcm/send 와 http 통신을 하는 App server 클래스이다.
 public class AppServer {
 
     String server_key = "AAAAgkUXc-0:APA91bHpxOFapwTWJATAGNYLlQ0HcXW3k4RrsfekWb-VMx-LYrjBSJM2UMWTegoSfPbollQY0svzv7MioTp-JpA5niHD2YhpM19PvwU14_fu4EUyU1yNw6WuLa5PiWdhikKXNvzCND-n"; // Server key(For app Server in Firebase)
@@ -41,6 +45,7 @@ public class AppServer {
         return this.token;
     }
 
+    // 친구에게 수락 메세지를 보내주는 함수
     public void sendAcceptMessage(final String myname, final String friendToken){
 
         new AsyncTask<Void, Void, Void>() {
@@ -108,6 +113,7 @@ public class AppServer {
 
     }
 
+    // 친구 신청 함수
     public void registerFriend(final String message){
         new AsyncTask<Void, Void, Void>() {
 
@@ -168,6 +174,7 @@ public class AppServer {
     }
 
 
+    // 친구에게 메시지를 보내는 함수
     public void sendMarkerWithTime(final String myname, final String friendName, final String friendToken,
                                    final String title, final String content, final Double lat, final Double lng,
                                    final int year, final int month, final int day, final int hour, final int minute){

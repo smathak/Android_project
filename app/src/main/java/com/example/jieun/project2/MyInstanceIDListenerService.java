@@ -23,10 +23,9 @@ public class MyInstanceIDListenerService extends InstanceIDListenerService {
 
     @Override
     // Start refresh token
-    // The listener service's onTokenRefresh method should be invoked if the GCM registration token has been refreshed:
-
+    // GCM Registration token이 갱신되었을 경우 이 함수가 호출되야한 한다.
     public void onTokenRefresh() {
-        // Fetch updated Instance ID token and notify our app's server of any changes (if applicable).
+        // Listener service를 부름
         Intent intent = new Intent(this, RegistrationService.class);
         startService(intent);
     }
