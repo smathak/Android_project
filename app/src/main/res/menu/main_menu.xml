@@ -6,9 +6,10 @@
         android:id="@+id/item"
         android:title="Notice Board" />
     <item
-        android:id="@+id/request"
-        android:title="Start" />
-    <item
         android:id="@+id/gcmFriend"
         android:title="Friend Register" />
+    <item
+        android:id="@+id/request"
+        android:title="Start" />
+
 </menu>

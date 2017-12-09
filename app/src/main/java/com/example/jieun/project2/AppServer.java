@@ -26,18 +26,15 @@ public class AppServer {
 
     String server_key = "AAAAgkUXc-0:APA91bHpxOFapwTWJATAGNYLlQ0HcXW3k4RrsfekWb-VMx-LYrjBSJM2UMWTegoSfPbollQY0svzv7MioTp-JpA5niHD2YhpM19PvwU14_fu4EUyU1yNw6WuLa5PiWdhikKXNvzCND-n"; // Server key(For app Server in Firebase)
     String sender_id = "559504913389";
-    JSONObject jsonObject = new JSONObject();
-    JSONObject down = new JSONObject();
+
     public static String token;
     // GCM Server HTTP 방식
     //        https://android.googleapis.com/gcm/notification
     //        https://gcm-http.googleapis.com/gcm/send
 
     public AppServer(){}
+    public void connect(){}
 
-    public void connect(){
-
-    }
     public void setToken(String t){
         this.token = t;
     }
@@ -65,26 +62,21 @@ public class AppServer {
                     http.setDoInput(true);
                     http.connect();
 
+                    JSONObject downjson = new JSONObject();
                     OutputStream output = http.getOutputStream();
                     try {
-                        //                        jsonObject.accumulate("operation", "create");
-                        //                        jsonObject.accumulate("notification_key_name", "appUser-jieun");
-                        //                        jsonObject.accumulate("registrations_ids", registration_ids);
-
-                        down.accumulate("to", friendToken);  // 친구 토큰을 이용하여 친구에게 보냄
+                        downjson.accumulate("to", friendToken);  // 친구 토큰을 이용하여 친구에게 보냄
                         JSONObject message = new JSONObject();
                         message.put("name", Constants.MY_NAME);    // 내 이름(나의 이름을 밝힘)
                         message.put("token", Constants.MY_TOKEN);   // 나의 토큰도 전달해야지 친구가 나에게도 메세지를 보낼 수 있음
                         message.put("message", "accepted your request"); // 수락 했다는 안내 메세지를 전달
-                        down.put("data", message);
+                        downjson.put("data", message);
 
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
 
-                    String json = jsonObject.toString();
-                    String downstream = down.toString();
-                    Log.i("notice", json);
+                    String downstream = downjson.toString();
 
                     output.write(downstream.getBytes("UTF-8"));
                     output.flush();
@@ -114,7 +106,7 @@ public class AppServer {
     }
 
     // 친구 신청 함수
-    public void registerFriend(final String message){
+    public void registerFriend(final String friend){
         new AsyncTask<Void, Void, Void>() {
 
             @Override
@@ -131,27 +123,28 @@ public class AppServer {
                     http.setDoInput(true);
                     http.connect();
 
+                    JSONObject downjson = new JSONObject();
                     OutputStream output = http.getOutputStream();
                     try {
-                        down.accumulate("to", "/topics/"+message);  // message는 친구 이름
+
+                        downjson.accumulate("to", "/topics/"+friend);
                         JSONObject message = new JSONObject();
                         message.put("name", Constants.MY_NAME); // 나의 이름
                         message.put("token", getToken());   // 나의 토큰
-                        down.put("data", message);
+                        downjson.put("data", message);
 
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
 
-                    String json = jsonObject.toString();
-                    String downstream = down.toString();
-                    Log.i("notice", json);
+                    String downstream = downjson.toString();
+                    Log.i("notice", "Downstream: "+downstream);
 
                     output.write(downstream.getBytes("UTF-8"));
                     output.flush();
                     output.close();
-                    Log.i("notice", "test http request post: "+http.getResponseCode());
-                    Log.i("notice", "test http request message: "+http.getResponseMessage());
+                    Log.i("notice", "test http getResponseCode post: "+http.getResponseCode());
+                    Log.i("notice", "test http getResponseMessage message: "+http.getResponseMessage());
 
                     InputStream input = http.getInputStream();
                     byte[] buffer = new byte[1024];
@@ -194,14 +187,15 @@ public class AppServer {
                     http.setDoInput(true);
                     http.connect();
 
+                    JSONObject downjson = new JSONObject();
                     OutputStream output = http.getOutputStream();
                     try {
-                        down.accumulate("to", friendToken);
+                        downjson.accumulate("to", friendToken);
                         JSONObject message = new JSONObject();
                         message.put("sender_name", myname); // 보낸 사람 이름
                         message.put("title", title);
                         message.put("content", content);
-                        Log.i("notice", "com.example.jieun.project2.ThingsToDo.AppServer: "+lat);
+//                        Log.i("notice", "com.example.jieun.project2.ThingsToDo.AppServer: "+lat);
                         message.put("latitude", String.valueOf(lat));
                         message.put("longitude", String.valueOf(lng));
                         message.put("category", "marker");
@@ -210,15 +204,13 @@ public class AppServer {
                         message.put("day", String.valueOf(day));
                         message.put("hour", String.valueOf(hour));
                         message.put("minute", String.valueOf(minute));
-                        down.put("data", message);
+                        downjson.put("data", message);
 
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
 
-                    String json = jsonObject.toString();
-                    String downstream = down.toString();
-                    Log.i("notice", json);
+                    String downstream = downjson.toString();
 
                     output.write(downstream.getBytes("UTF-8"));
                     output.flush();

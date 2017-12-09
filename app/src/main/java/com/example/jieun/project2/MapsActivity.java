@@ -32,6 +32,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -261,6 +262,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Time
         Intent timeIntent = new Intent(this, DateTimeService.class);
         startService(timeIntent);
+
+        TextView textView = (TextView)findViewById(R.id.yourid);
+        textView.setText(Constants.MY_NAME);
     }
 
 
